@@ -1,5 +1,5 @@
 
-int irsensor = A0;    //sensor is attached on pinA0
+int irsensor = D21;    //sensor is attached on pinA0
 byte serialRead = 0;  //for control serial communication
 int signalADC = 0;    // the read out signal in 0-1023 corresponding to 0-5V
 
@@ -20,13 +20,17 @@ void loop() {
   }
 
   signalADC = analogRead(irsensor);                // the read out is a signal from 0-1023 corresponding to 0-5v
+  Serial.print(signalADC);
+  
+  
+  
   int distance1 = 17948 * pow(signalADC, -1.22);   // calculate the distance using the datasheet graph
-  int distancec = 46161 * pow(signalADC, -1.302);  // calculate the distance using the calibrated graph
-  Serial.print("distance datasheet graph ");       //print out the results on serial monitor
-  Serial.print(distance1);
-  Serial.println("cm");
-  Serial.print(" ");
-  Serial.print("distance calibration graph ");
-  Serial.print(distancec);
-  Serial.println("cm");
+  int distancec = 46161 * pow(signalADC, -1.302);  // calculate the distance using the calibrated graph --> we need to make this specific to our sensor
+  // Serial.print("distance datasheet graph ");       //print out the results on serial monitor
+  // Serial.print(distance1);
+  // Serial.println("cm");
+  // Serial.print(" ");
+  // Serial.print("distance calibration graph ");
+  // Serial.print(distancec);
+  // Serial.println("cm");
 }
