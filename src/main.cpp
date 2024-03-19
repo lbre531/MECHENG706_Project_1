@@ -24,7 +24,7 @@
 //include all header files for other code here
 
 #include <Servo.h>  //Need for Servo pulse output
-
+#include <Arduino.h>
 
 //#define NO_READ_GYRO  //Uncomment of GYRO is not attached.
 //#define NO_HC-SR04 //Uncomment of HC-SR04 ultrasonic ranging sensor is not attached.
@@ -65,6 +65,29 @@ int speed_change;
 
 //Serial Pointer
 HardwareSerial *SerialCom;
+
+//function definitions:
+STATE initialising();
+STATE running();
+STATE stopped();
+void fast_flash_double_LED_builtin();
+void slow_flash_LED_builtin();
+void speed_change_smooth();
+boolean is_battery_voltage_OK();
+void HC_SR04_range();
+void Analog_Range_A4();
+void GYRO_reading();
+void read_serial_command();
+void disable_motors();
+void enable_motors();
+void forward();
+void reverse ();
+void stop();
+void ccw ();
+void cw();
+void strafe_left();
+void strafe_right();
+
 
 int pos = 0;
 void setup(void)
