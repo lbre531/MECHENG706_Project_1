@@ -5,7 +5,6 @@
 #define GYRO_PIN A3
 
 float gyroSensitivity = 0.007;
-float T;
 
 int zeroGyroVoltage = 0;
 
@@ -33,8 +32,25 @@ float getAngularVelocity(void){
     return w;
 }
 
-float getAngle(void){
+//it might make sense for this to be a class- then can have getAngle method and compute() in main loop
+//get angle must be called in the main loop
+float getAngle(long T){ 
+
+    static long prev_millis;
+    static float currentAngle = 0;
+    long now = millis();
+    float currentSpeed;
+
+    if((prev_millis + T) < now ){ //only run logic at specified period
+        currentSpeed = getAngularVelocity();
+        currentAngle += currentSpeed*(float)T; // calculate the current angle
+        return currentAngle;
+    }
+    //if 
+    return -1.0;
     
+    
+
 }
 
 void resetAngle(void){}
