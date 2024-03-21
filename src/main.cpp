@@ -26,6 +26,7 @@
 #include <Servo.h>  //Need for Servo pulse output
 #include <Arduino.h>
 #include <movement.h>
+#include <gyro.h>
 
 //#define NO_READ_GYRO  //Uncomment of GYRO is not attached.
 //#define NO_HC-SR04 //Uncomment of HC-SR04 ultrasonic ranging sensor is not attached.
@@ -95,6 +96,8 @@ void setup(void)
 {
   turret_motor.attach(11);
   pinMode(LED_BUILTIN, OUTPUT);
+
+  //include input for gyro pin
 
   // The Trigger pin will tell the sensor to range find
   pinMode(TRIG_PIN, OUTPUT);
