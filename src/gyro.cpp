@@ -23,5 +23,19 @@ void initiliseGyro(void){
 }
 
 float getAngularVelocity(void){
+    int V, diff;
+    float w;
+    V = analogRead(GYRO_PIN);
+    diff = V - zeroGyroVoltage;
 
+    w = (float)diff/gyroSensitivity * 0.00488; //calculate angular velocity
+
+    return w;
 }
+
+float getAngle(void){
+    
+}
+
+void resetAngle(void){}
+
