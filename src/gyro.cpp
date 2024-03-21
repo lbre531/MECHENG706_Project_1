@@ -7,7 +7,7 @@
 float gyroSensitivity = 0.007;
 
 int zeroGyroVoltage = 0;
-
+float currentAngle = 0;
 
 void initiliseGyro(void){
     int sum = 0, sensorValue = 0, i=0; 
@@ -32,26 +32,29 @@ float getAngularVelocity(void){
     return w;
 }
 
-//it might make sense for this to be a class- then can have getAngle method and compute() in main loop
-//get angle must be called in the main loop
-float getAngle(long T){ 
+
+//calculates angle- returns ture if the code runs
+bool calcAngle(long T){ 
 
     static long prev_millis;
-    static float currentAngle = 0;
     long now = millis();
     float currentSpeed;
 
     if((prev_millis + T) < now ){ //only run logic at specified period
         currentSpeed = getAngularVelocity();
         currentAngle += currentSpeed*(float)T; // calculate the current angle
-        return currentAngle;
+        return 1;
     }
-    //if 
-    return -1.0;
-    
-    
 
+    return 0;
 }
 
-void resetAngle(void){}
+float getAngle(){
+    return currentAngle;
+}
+
+
+void resetAngle(void){
+    currentAngle = 0
+}
 
