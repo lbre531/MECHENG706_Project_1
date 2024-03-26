@@ -27,6 +27,7 @@
 #include <Arduino.h>
 #include <movement.h>
 #include <gyro.h>
+#include <SoftwareSerial.h>
 
 //#define NO_READ_GYRO  //Uncomment of GYRO is not attached.
 //#define NO_HC-SR04 //Uncomment of HC-SR04 ultrasonic ranging sensor is not attached.
@@ -40,6 +41,17 @@ enum STATE {
 };
 
 //Refer to Shield Pinouts.jpg for pin locations
+
+//Bluetooth 
+// Serial Data input pin
+#define BLUETOOTH_RX 10
+// Serial Data output pin
+#define BLUETOOTH_TX 11
+// Bluetooth Serial Port
+#define OUTPUTBLUETOOTHMONITOR 1
+//volatile int32_t Counter = 1;
+SoftwareSerial BluetoothSerial(BLUETOOTH_RX, BLUETOOTH_TX);
+
 
 //Default motor control pins
 
@@ -56,6 +68,7 @@ const unsigned int MAX_DIST = 23200;
 
 //Serial Pointer
 HardwareSerial *SerialCom;
+//SerialCom = &BluetoothSerial;
 
 //function definitions:
 STATE initialising();
@@ -90,6 +103,8 @@ void setup(void)
   delay(1000);
   SerialCom->println("Setup....");
 
+  BluetoothSerial.begin(115200);
+
   delay(1000); //settling time but no really needed
 
 }
@@ -122,19 +137,42 @@ STATE initialising() {
   return RUNNING;
 }
 
+
+float current_angle;
+int bias = 0;
 STATE running() {
 
   static unsigned long previous_millis;
-
+  //calcAngle(10); //calculate the current angle of the robot
+  
   // read_serial_command();
   fast_flash_double_LED_builtin();
 
-  if (millis() - previous_millis > 500) {  //Arduino style 500ms timed execution statement
+  if (millis() - previous_millis > 250) {  //Arduino style 500ms timed execution statement
     previous_millis = millis();
+    //get the current angle
+    //current_angle = getAngle();
+    //drive forward with bias
     
-    //drive forward
-    forward();
-    forwardBias (50);
+    //forward();
+    //forwardBias (50);
+
+    //test for turning to angle:
+    // cw();
+    // if(current_angle > 85) return STOPPED;
+    //end test for turning to angle
+
+    //test for straffing with bias
+    strafe_right_bias(20);
+
+    //test for going straight
+  //  if ((0 < current_angle) && (current_angle < 90)) {
+  //   bias = -50;
+  //   } else if ((0 > current_angle) && (current_angle > -90)) {
+  //   bias = 50;
+  //  } 
+  //  forwardBias(bias); 
+
 
 #ifndef NO_READ_GYRO
     GYRO_reading();
@@ -149,17 +187,12 @@ STATE running() {
 #endif
 
 
-    //turret_motor.write(pos);
+//print serial
+Serial.println();
+Serial.print("Current Angle: ");
+Serial.println(current_angle);
 
-    // if (pos == 0)
-    // {
-    //   pos = 45;
-    // }
-    // else
-    // {
-    //   pos = 0;
-    // }
-  }
+}
 
   return RUNNING;
 }

@@ -22,6 +22,13 @@ void forwardBias (int bias)
     left_rear_motor.writeMicroseconds(1500 + speed_val);
     right_rear_motor.writeMicroseconds(1500 - speed_val);
     right_font_motor.writeMicroseconds(1500 - speed_val);
+}
+
+void strafe_right_bias( int bias){
+  left_font_motor.writeMicroseconds(1500 + 100);
+  left_rear_motor.writeMicroseconds(1500 - 100);
+  right_rear_motor.writeMicroseconds(1500 - 92 - bias); //should rotate without changing vertical movement
+  right_font_motor.writeMicroseconds(1500 + 92 + bias);
 
 }
 
@@ -56,10 +63,10 @@ void stop() //Stop
 
 void forward()
 {
-  left_font_motor.writeMicroseconds(1500 + speed_val);
-  left_rear_motor.writeMicroseconds(1500 + speed_val);
-  right_rear_motor.writeMicroseconds(1500 - speed_val);
-  right_font_motor.writeMicroseconds(1500 - speed_val);
+  left_font_motor.writeMicroseconds(1500 + 200);
+  left_rear_motor.writeMicroseconds(1500 + 200);
+  right_rear_motor.writeMicroseconds(1500 - 184);
+  right_font_motor.writeMicroseconds(1500 - 184);
 }
 
 void reverse ()

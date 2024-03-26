@@ -5,6 +5,7 @@
 
 //include function definitions
 void forwardBias (int bias);
+void strafe_right_bias( int bias);
 void disable_motors();
 void enable_motors();
 void forward();
