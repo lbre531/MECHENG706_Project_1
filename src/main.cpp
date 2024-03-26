@@ -42,10 +42,6 @@ enum STATE {
 //Refer to Shield Pinouts.jpg for pin locations
 
 //Default motor control pins
-const byte left_front = 46;
-const byte left_rear = 47;
-const byte right_rear = 50;
-const byte right_front = 51;
 
 
 //Default ultrasonic ranging sensor pins, these pins are defined my the Shield
@@ -55,15 +51,8 @@ const int ECHO_PIN = 49;
 // Anything over 400 cm (23200 us pulse) is "out of range". Hit:If you decrease to this the ranging sensor but the timeout is short, you may not need to read up to 4meters.
 const unsigned int MAX_DIST = 23200;
 
-Servo left_font_motor;  // create servo object to control Vex Motor Controller 29
-Servo left_rear_motor;  // create servo object to control Vex Motor Controller 29
-Servo right_rear_motor;  // create servo object to control Vex Motor Controller 29
-Servo right_font_motor;  // create servo object to control Vex Motor Controller 29
-Servo turret_motor;
-
-
-int speed_val = 100;
-int speed_change;
+//int speed_val = 100;
+// int speed_change;
 
 //Serial Pointer
 HardwareSerial *SerialCom;
@@ -74,27 +63,18 @@ STATE running();
 STATE stopped();
 void fast_flash_double_LED_builtin();
 void slow_flash_LED_builtin();
-void speed_change_smooth();
 boolean is_battery_voltage_OK();
 void HC_SR04_range();
 void Analog_Range_A4();
 void GYRO_reading();
-void read_serial_command();
-void disable_motors();
-void enable_motors();
-void forward();
-void reverse ();
-void stop();
-void ccw ();
-void cw();
-void strafe_left();
-void strafe_right();
+// void read_serial_command();
+
 
 
 int pos = 0;
 void setup(void)
 {
-  turret_motor.attach(11);
+  
   pinMode(LED_BUILTIN, OUTPUT);
 
   //include input for gyro pin
@@ -146,15 +126,15 @@ STATE running() {
 
   static unsigned long previous_millis;
 
-  read_serial_command();
+  // read_serial_command();
   fast_flash_double_LED_builtin();
 
   if (millis() - previous_millis > 500) {  //Arduino style 500ms timed execution statement
     previous_millis = millis();
-
-    SerialCom->println("RUNNING---------");
-    speed_change_smooth();
-    Analog_Range_A4();
+    
+    //drive forward
+    forward();
+    forwardBias (50);
 
 #ifndef NO_READ_GYRO
     GYRO_reading();
@@ -169,16 +149,16 @@ STATE running() {
 #endif
 
 
-    turret_motor.write(pos);
+    //turret_motor.write(pos);
 
-    if (pos == 0)
-    {
-      pos = 45;
-    }
-    else
-    {
-      pos = 0;
-    }
+    // if (pos == 0)
+    // {
+    //   pos = 45;
+    // }
+    // else
+    // {
+    //   pos = 0;
+    // }
   }
 
   return RUNNING;
@@ -244,13 +224,6 @@ void slow_flash_LED_builtin()
   }
 }
 
-void speed_change_smooth()
-{
-  speed_val += speed_change;
-  if (speed_val > 1000)
-    speed_val = 1000;
-  speed_change = 0;
-}
 
 #ifndef NO_BATTERY_V_OK
 boolean is_battery_voltage_OK()
@@ -374,141 +347,62 @@ void GYRO_reading()
 #endif
 
 //Serial command pasing
-void read_serial_command()
-{
-  if (SerialCom->available()) {
-    char val = SerialCom->read();
-    SerialCom->print("Speed:");
-    SerialCom->print(speed_val);
-    SerialCom->print(" ms ");
+// void read_serial_command()
+// {
+//   if (SerialCom->available()) {
+//     char val = SerialCom->read();
 
-    //Perform an action depending on the command
-    switch (val) {
-      case 'w'://Move Forward
-      case 'W':
-        forward ();
-        SerialCom->println("Forward");
-        break;
-      case 's'://Move Backwards
-      case 'S':
-        reverse ();
-        SerialCom->println("Backwards");
-        break;
-      case 'q'://Turn Left
-      case 'Q':
-        strafe_left();
-        SerialCom->println("Strafe Left");
-        break;
-      case 'e'://Turn Right
-      case 'E':
-        strafe_right();
-        SerialCom->println("Strafe Right");
-        break;
-      case 'a'://Turn Right
-      case 'A':
-        ccw();
-        SerialCom->println("ccw");
-        break;
-      case 'd'://Turn Right
-      case 'D':
-        cw();
-        SerialCom->println("cw");
-        break;
-      case '-'://Turn Right
-      case '_':
-        speed_change = -100;
-        SerialCom->println("-100");
-        break;
-      case '=':
-      case '+':
-        speed_change = 100;
-        SerialCom->println("+");
-        break;
-      default:
-        stop();
-        SerialCom->println("stop");
-        break;
-    }
+//     //Perform an action depending on the command
+//     switch (val) {
+//       case 'w'://Move Forward
+//       case 'W':
+//         forward ();
+//         SerialCom->println("Forward");
+//         break;
+//       case 's'://Move Backwards
+//       case 'S':
+//         reverse ();
+//         SerialCom->println("Backwards");
+//         break;
+//       case 'q'://Turn Left
+//       case 'Q':
+//         strafe_left();
+//         SerialCom->println("Strafe Left");
+//         break;
+//       case 'e'://Turn Right
+//       case 'E':
+//         strafe_right();
+//         SerialCom->println("Strafe Right");
+//         break;
+//       case 'a'://Turn Right
+//       case 'A':
+//         ccw();
+//         SerialCom->println("ccw");
+//         break;
+//       case 'd'://Turn Right
+//       case 'D':
+//         cw();
+//         SerialCom->println("cw");
+//         break;
+//       case '-'://Turn Right
+//       case '_':
+//         speed_change = -100;
+//         SerialCom->println("-100");
+//         break;
+//       case '=':
+//       case '+':
+//         speed_change = 100;
+//         SerialCom->println("+");
+//         break;
+//       default:
+//         stop();
+//         SerialCom->println("stop");
+//         break;
+//     }
 
-  }
+//   }
 
-}
+// }
 
 //----------------------Motor moments------------------------
 //The Vex Motor Controller 29 use Servo Control signals to determine speed and direction, with 0 degrees meaning neutral https://en.wikipedia.org/wiki/Servo_control
-
-void disable_motors()
-{
-  left_font_motor.detach();  // detach the servo on pin left_front to turn Vex Motor Controller 29 Off
-  left_rear_motor.detach();  // detach the servo on pin left_rear to turn Vex Motor Controller 29 Off
-  right_rear_motor.detach();  // detach the servo on pin right_rear to turn Vex Motor Controller 29 Off
-  right_font_motor.detach();  // detach the servo on pin right_front to turn Vex Motor Controller 29 Off
-
-  pinMode(left_front, INPUT);
-  pinMode(left_rear, INPUT);
-  pinMode(right_rear, INPUT);
-  pinMode(right_front, INPUT);
-}
-
-void enable_motors()
-{
-  left_font_motor.attach(left_front);  // attaches the servo on pin left_front to turn Vex Motor Controller 29 On
-  left_rear_motor.attach(left_rear);  // attaches the servo on pin left_rear to turn Vex Motor Controller 29 On
-  right_rear_motor.attach(right_rear);  // attaches the servo on pin right_rear to turn Vex Motor Controller 29 On
-  right_font_motor.attach(right_front);  // attaches the servo on pin right_front to turn Vex Motor Controller 29 On
-}
-void stop() //Stop
-{
-  left_font_motor.writeMicroseconds(1500);
-  left_rear_motor.writeMicroseconds(1500);
-  right_rear_motor.writeMicroseconds(1500);
-  right_font_motor.writeMicroseconds(1500);
-}
-
-void forward()
-{
-  left_font_motor.writeMicroseconds(1500 + speed_val);
-  left_rear_motor.writeMicroseconds(1500 + speed_val);
-  right_rear_motor.writeMicroseconds(1500 - speed_val);
-  right_font_motor.writeMicroseconds(1500 - speed_val);
-}
-
-void reverse ()
-{
-  left_font_motor.writeMicroseconds(1500 - speed_val);
-  left_rear_motor.writeMicroseconds(1500 - speed_val);
-  right_rear_motor.writeMicroseconds(1500 + speed_val);
-  right_font_motor.writeMicroseconds(1500 + speed_val);
-}
-
-void ccw ()
-{
-  left_font_motor.writeMicroseconds(1500 - speed_val);
-  left_rear_motor.writeMicroseconds(1500 - speed_val);
-  right_rear_motor.writeMicroseconds(1500 - speed_val);
-  right_font_motor.writeMicroseconds(1500 - speed_val);
-}
-
-void cw ()
-{
-  left_font_motor.writeMicroseconds(1500 + speed_val);
-  left_rear_motor.writeMicroseconds(1500 + speed_val);
-  right_rear_motor.writeMicroseconds(1500 + speed_val);
-  right_font_motor.writeMicroseconds(1500 + speed_val);
-}
-
-void strafe_left ()
-{
-  left_font_motor.writeMicroseconds(1500 - speed_val);
-  left_rear_motor.writeMicroseconds(1500 + speed_val);
-  right_rear_motor.writeMicroseconds(1500 + speed_val);
-  right_font_motor.writeMicroseconds(1500 - speed_val);
-}
-
-void strafe_right ()
-{
-  left_font_motor.writeMicroseconds(1500 + speed_val);
-  left_rear_motor.writeMicroseconds(1500 - speed_val);
-  right_rear_motor.writeMicroseconds(1500 - speed_val);
-  right_font_motor.writeMicroseconds(1500 + speed_val);
-}
