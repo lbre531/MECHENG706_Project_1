@@ -11,7 +11,7 @@ float currentAngle = 0;
 
 void initiliseGyro(void){
     int sum = 0, sensorValue = 0, i=0; 
-    
+    pinMode(GYRO_PIN, INPUT);
     for (i=0;i<10;i++) // read 100 values of voltage when gyro is at still, to calculate the zero-drift.
 {
         sensorValue = analogRead(GYRO_PIN);
@@ -40,7 +40,12 @@ float getAngularVelocity(void){
     int V, diff;
     float w;
     V = analogRead(GYRO_PIN);
+    Serial.print("V: ");
+    Serial.println(V);
+    
     diff = V - zeroGyroVoltage;
+    Serial.print("diff: ");
+    Serial.println(diff);
 
     w = (float)diff/gyroSensitivity * 0.00488; //calculate angular velocity
 

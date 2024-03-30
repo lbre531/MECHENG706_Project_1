@@ -28,10 +28,11 @@
 #include <movement.h>
 #include <gyro.h>
 #include <SoftwareSerial.h>
+#include <ir.h>
 
 //#define NO_READ_GYRO  //Uncomment of GYRO is not attached.
 //#define NO_HC-SR04 //Uncomment of HC-SR04 ultrasonic ranging sensor is not attached.
-//#define NO_BATTERY_V_OK //Uncomment of BATTERY_V_OK if you do not care about battery damage.
+#define NO_BATTERY_V_OK //Uncomment of BATTERY_V_OK if you do not care about battery damage.
 
 //State machine states
 enum STATE {
@@ -143,7 +144,7 @@ int bias = 0;
 STATE running() {
 
   static unsigned long previous_millis;
-  //calcAngle(10); //calculate the current angle of the robot
+  calcAngle(10); //calculate the current angle of the robot
   
   // read_serial_command();
   fast_flash_double_LED_builtin();
@@ -151,7 +152,7 @@ STATE running() {
   if (millis() - previous_millis > 250) {  //Arduino style 500ms timed execution statement
     previous_millis = millis();
     //get the current angle
-    //current_angle = getAngle();
+    current_angle = getAngle();
     //drive forward with bias
     
     //forward();
@@ -163,7 +164,7 @@ STATE running() {
     //end test for turning to angle
 
     //test for straffing with bias
-    strafe_right_bias(20);
+    strafe_right_bias(0);
 
     //test for going straight
   //  if ((0 < current_angle) && (current_angle < 90)) {
