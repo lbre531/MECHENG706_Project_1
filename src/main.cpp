@@ -367,15 +367,15 @@ void HC_SR04_range()
 
 void Analog_Range_A4()
 {
-  SerialCom->print("Analog Range A4:");
-  SerialCom->println(analogRead(A4));
+  // SerialCom->print("Analog Range A4:");
+  // SerialCom->println(analogRead(A4));
 }
 
 #ifndef NO_READ_GYRO
 void GYRO_reading()
 {
-  SerialCom->print("GYRO A3:");
-  SerialCom->println(analogRead(A3));
+//   SerialCom->print("GYRO A3:");
+//   SerialCom->println(analogRead(A3));
 }
 #endif
 
