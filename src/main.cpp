@@ -69,7 +69,6 @@ const unsigned int MAX_DIST = 23200;
 
 //Serial Pointer
 HardwareSerial *SerialCom;
-//SerialCom = &BluetoothSerial;
 
 //function definitions:
 STATE initialising();
@@ -81,6 +80,12 @@ boolean is_battery_voltage_OK();
 void HC_SR04_range();
 void Analog_Range_A4();
 void GYRO_reading();
+
+//Define sensor1
+//IRSensorInterface sensor;
+ IRSensorInterface sensor;
+  
+
 // void read_serial_command();
 
 
@@ -88,7 +93,6 @@ void GYRO_reading();
 int pos = 0;
 void setup(void)
 {
-  
   pinMode(LED_BUILTIN, OUTPUT);
 
   //include input for gyro pin
@@ -96,6 +100,13 @@ void setup(void)
   // The Trigger pin will tell the sensor to range find
   pinMode(TRIG_PIN, OUTPUT);
   digitalWrite(TRIG_PIN, LOW);
+
+  //set up IR sensor of A2 pin
+  //sensor.IRSensorInterface(2);
+  sensor.begin(A2);
+ 
+  
+
 
   // Setup the Serial port and pointer, the pointer allows switching the debug info through the USB port(Serial) or Bluetooth port(Serial1) with ease.
   SerialCom = &Serial;
@@ -138,42 +149,19 @@ STATE initialising() {
   return RUNNING;
 }
 
-
-float current_angle;
 int bias = 0;
 STATE running() {
 
   static unsigned long previous_millis;
-  calcAngle(10); //calculate the current angle of the robot
-  
+  //get the ir sensor reading
+  sensor.readSensor(50); //read sensor with a period of 50ms
+
   // read_serial_command();
   fast_flash_double_LED_builtin();
 
-  if (millis() - previous_millis > 250) {  //Arduino style 500ms timed execution statement
+  if (millis() - previous_millis > 250) {  //Arduino style 150 ms timed execution statement
     previous_millis = millis();
-    //get the current angle
-    current_angle = getAngle();
-    //drive forward with bias
-    
-    //forward();
-    //forwardBias (50);
-
-    //test for turning to angle:
-    // cw();
-    // if(current_angle > 85) return STOPPED;
-    //end test for turning to angle
-
-    //test for straffing with bias
-    strafe_right_bias(0);
-
-    //test for going straight
-  //  if ((0 < current_angle) && (current_angle < 90)) {
-  //   bias = -50;
-  //   } else if ((0 > current_angle) && (current_angle > -90)) {
-  //   bias = 50;
-  //  } 
-  //  forwardBias(bias); 
-
+   
 
 #ifndef NO_READ_GYRO
     GYRO_reading();
@@ -187,11 +175,6 @@ STATE running() {
     if (!is_battery_voltage_OK()) return STOPPED;
 #endif
 
-
-//print serial
-Serial.println();
-Serial.print("Current Angle: ");
-Serial.println(current_angle);
 
 }
 
@@ -327,7 +310,7 @@ void HC_SR04_range()
     t2 = micros();
     pulse_width = t2 - t1;
     if ( pulse_width > (MAX_DIST + 1000)) {
-      SerialCom->println("HC-SR04: NOT found");
+      //SerialCom->println("HC-SR04: NOT found");
       return;
     }
   }
@@ -341,7 +324,7 @@ void HC_SR04_range()
     t2 = micros();
     pulse_width = t2 - t1;
     if ( pulse_width > (MAX_DIST + 1000) ) {
-      SerialCom->println("HC-SR04: Out of range");
+      //SerialCom->println("HC-SR04: Out of range");
       return;
     }
   }
@@ -357,11 +340,11 @@ void HC_SR04_range()
 
   // Print out results
   if ( pulse_width > MAX_DIST ) {
-    SerialCom->println("HC-SR04: Out of range");
+    //SerialCom->println("HC-SR04: Out of range");
   } else {
-    SerialCom->print("HC-SR04:");
-    SerialCom->print(cm);
-    SerialCom->println("cm");
+    //SerialCom->print("HC-SR04:");
+    //SerialCom->print(cm);
+    //SerialCom->println("cm");
   }
 }
 #endif
@@ -375,8 +358,8 @@ void Analog_Range_A4()
 #ifndef NO_READ_GYRO
 void GYRO_reading()
 {
-  SerialCom->print("GYRO A3:");
-  SerialCom->println(analogRead(A3));
+  //SerialCom->print("GYRO A3:");
+  //SerialCom->println(analogRead(A3));
 }
 #endif
 

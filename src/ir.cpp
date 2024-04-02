@@ -1,12 +1,18 @@
 #include <Arduino.h>  // Include Arduino core library if necessary
+#include "ir.h"
 
-class IRSensorInterface {
-private:
-    int pin;
-    float current_reading;
+//class IRSensorInterface {
+//private:
+    // int pin;
+    // int current_reading;
+     
 
-public:
-    IRSensorInterface(int pin): pin(pin), current_reading(0){
+//public:
+
+    IRSensorInterface::IRSensorInterface(): pin(0), current_reading(0){} 
+    
+    void IRSensorInterface::begin(int pin){
+        this->pin = pin;
         pinMode(pin, INPUT);
     }
     
@@ -14,31 +20,39 @@ public:
     //inputs : period is the time in milliseconds for each loop
     //outputs: the output is 1 if the sensor value is read and 0 otherwise
 
-    bool readSensor(long period){
+    bool IRSensorInterface::readSensor(long period){
         static long prev_millis;
         long current = millis();
         
-        int sensor_reading;
+        float sensor_reading;
 
-        if ((prev_millis + period) > current){
+        if ((prev_millis + period) < current){
             sensor_reading = analogRead(pin);
 
+            //update current reading
             current_reading = applyFilter(sensor_reading);
 
             //update the time for the last loop
             prev_millis = current;
+
+            Serial.print(sensor_reading);
+            Serial.print(", ");
+            Serial.println(current_reading);
         }
     }
     
-    int getOutput(){
+    float IRSensorInterface::getOutput(){
         return current_reading;
     }
 
-private:
-    float applyFilter(int rawValue){
+//private:
+    float IRSensorInterface::applyFilter(float rawValue){      
+        static float previous_output;
         //apply exponential filter possibly
-
-        
+        //y(k) = a * y(k-1) +  (1-a) * x(k)
+        //tau = -T/log(a) 
+        previous_output = 0.2 * previous_output + 0.8 * rawValue; //check integer division
+        return previous_output;
     }
     
-};
+//};
