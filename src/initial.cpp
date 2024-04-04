@@ -2,16 +2,6 @@
 #include "Arduino.h"
 #include <movement.h>
 
-
-void wall_Align ()
-{
-
-    // If left IR sensor is closer, rotate anti-clockwise
-    // If right IR sensor is closer, rotate clockwise
-    // Align when both IR sensor reading are approximately identical
-
-}
-
 void initial_Routine ()
 {
     // Inititally reverse from wherever the robot starts
@@ -21,7 +11,7 @@ void initial_Routine ()
 
     // Rotate robot until short range IR sensors on the side of the robot are detecting the wall 
 
-    // Using wall_Align (to be written), align with wall
+    // Using wall_Align (to be written in iRed), align with wall
 
     // Reverse into a corner
 
