@@ -4,7 +4,7 @@
 //define global variables
 #define GYRO_PIN A3
 
-float gyroSensitivity = 0.0066;
+float gyroSensitivity = 0.0065;
 
 int zeroGyroVoltage = 0;
 float currentAngle = 0;
@@ -29,11 +29,9 @@ void initiliseGyro(void){
 
 
     //for testing
-    zeroGyroVoltage = 514;
+   //zeroGyroVoltage =+ 1;
 
-    //why is this not printing?
-    //Serial.print('zeroGyroVoltage is: ');
-    //Serial.println(zeroGyroVoltage);
+
 }
 
 float getAngularVelocity(void){
@@ -41,6 +39,7 @@ float getAngularVelocity(void){
     float w;
     V = analogRead(GYRO_PIN);
     diff = V - zeroGyroVoltage;
+    if (abs(diff) <= 1) diff = 0;
 
     w = (float)diff/gyroSensitivity * 0.00488; //calculate angular velocity
 
@@ -60,10 +59,10 @@ bool calcAngle(long T){
         currentSpeed = getAngularVelocity();
         currentAngle += currentSpeed*(float)T/1000.0; // calculate the current angle
         prev_millis = millis();
-         Serial.print("currentSpeed");
-         Serial.println(currentSpeed);
-        Serial.print("currentAngle: ");
-        Serial.println(currentAngle);
+        //  Serial.print("currentSpeed");
+        //  Serial.println(currentSpeed);
+        // Serial.print("currentAngle: ");
+        // Serial.println(currentAngle);
         return 1;
     }
    

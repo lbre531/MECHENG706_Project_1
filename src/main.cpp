@@ -28,10 +28,13 @@
 #include <movement.h>
 #include <gyro.h>
 #include <SoftwareSerial.h>
+#include <ir.h>
+#include <PID_V2.h>
+
 
 //#define NO_READ_GYRO  //Uncomment of GYRO is not attached.
 //#define NO_HC-SR04 //Uncomment of HC-SR04 ultrasonic ranging sensor is not attached.
-//#define NO_BATTERY_V_OK //Uncomment of BATTERY_V_OK if you do not care about battery damage.
+#define NO_BATTERY_V_OK //Uncomment of BATTERY_V_OK if you do not care about battery damage.
 
 //State machine states
 enum STATE {
@@ -50,18 +53,17 @@ enum STATE {
 // Bluetooth Serial Port
 #define OUTPUTBLUETOOTHMONITOR 1
 //volatile int32_t Counter = 1;
-SoftwareSerial BluetoothSerial(BLUETOOTH_RX, BLUETOOTH_TX);
+
+//SoftwareSerial BluetoothSerial(BLUETOOTH_RX, BLUETOOTH_TX);
 
 
 //Default motor control pins
 
 
 //Default ultrasonic ranging sensor pins, these pins are defined my the Shield
-const int TRIG_PIN = 48;
-const int ECHO_PIN = 49;
 
 // Anything over 400 cm (23200 us pulse) is "out of range". Hit:If you decrease to this the ranging sensor but the timeout is short, you may not need to read up to 4meters.
-const unsigned int MAX_DIST = 23200;
+
 
 //int speed_val = 100;
 // int speed_change;
@@ -70,6 +72,14 @@ const unsigned int MAX_DIST = 23200;
 HardwareSerial *SerialCom;
 //SerialCom = &BluetoothSerial;
 
+//IR sensors
+IRSensorInterface sensor1;
+
+//PID Controller
+double Kp = 1, Ki = 0, Kd = 0;
+PID_v2 myPID(Kp, Ki, Kd, PID::Direct);
+
+
 //function definitions:
 STATE initialising();
 STATE running();
@@ -77,7 +87,6 @@ STATE stopped();
 void fast_flash_double_LED_builtin();
 void slow_flash_LED_builtin();
 boolean is_battery_voltage_OK();
-void HC_SR04_range();
 void Analog_Range_A4();
 void GYRO_reading();
 // void read_serial_command();
@@ -87,14 +96,26 @@ void GYRO_reading();
 int pos = 0;
 void setup(void)
 {
+  //initilise PID controller 
+  myPID.Start(50   ,  // input
+              0,   // current output
+              50);// setpoint
+  myPID.SetOutputLimits(-100, 100);
+  myPID.SetControllerDirection(PID::Direct);
+  
   
   pinMode(LED_BUILTIN, OUTPUT);
 
   //include input for gyro pin
 
   // The Trigger pin will tell the sensor to range find
-  pinMode(TRIG_PIN, OUTPUT);
-  digitalWrite(TRIG_PIN, LOW);
+  initiliseUltrasonic();
+  //setup IR sensors
+  sensor1.begin(A5);
+
+  //setup gyro
+  initiliseGyro();
+
 
   // Setup the Serial port and pointer, the pointer allows switching the debug info through the USB port(Serial) or Bluetooth port(Serial1) with ease.
   SerialCom = &Serial;
@@ -103,7 +124,7 @@ void setup(void)
   delay(1000);
   SerialCom->println("Setup....");
 
-  BluetoothSerial.begin(115200);
+ // BluetoothSerial.begin(115200);
 
   delay(1000); //settling time but no really needed
 
@@ -138,17 +159,46 @@ STATE initialising() {
 }
 
 
-float current_angle;
-int bias = 0;
+
+bool PID=0;
 STATE running() {
 
   static unsigned long previous_millis;
-  //calcAngle(10); //calculate the current angle of the robot
+  // sensor1.readSensor(50); //poll IR sensor at 50ms period
+  calcAngle(10); //poll the gyro with a period of 5 ms
+  sensor1.readSensor(25);
+
+  //if(millis()%1000 == 0){ Serial.println(sensor1.getOutput()); }
+  //do the thing
+
+  turnAngle(90);
+  // wallFollow(20,&sensor1);
+  // wallFollowRev(20, &sensor1);
+  while(1);
+
+
+  //run the PID controller
+  //const double input = sensor1.getOutput();
+  //Testing
+  // BluetoothSerial.print("input, ");
+  // BluetoothSerial.print(input);
+ 
+  //const double output = myPID.Run(input);
   
-  // read_serial_command();
+  
+  // BluetoothSerial.print("output, ");
+  // BluetoothSerial.println(output);
+
+  //forwardBias((int)output);
+  //forwardBias(0);
+  //forward();
+  //read_serial_command();
   fast_flash_double_LED_builtin();
 
   if (millis() - previous_millis > 250) {  //Arduino style 500ms timed execution statement
+   
+    //forwardBias(output);
+    
     previous_millis = millis();
     //get the current angle
     //current_angle = getAngle();
@@ -163,7 +213,7 @@ STATE running() {
     //end test for turning to angle
 
     //test for straffing with bias
-    strafe_right_bias(20);
+    //strafe_right_bias(20);
 
     //test for going straight
   //  if ((0 < current_angle) && (current_angle < 90)) {
@@ -185,12 +235,6 @@ STATE running() {
 #ifndef NO_BATTERY_V_OK
     if (!is_battery_voltage_OK()) return STOPPED;
 #endif
-
-
-//print serial
-Serial.println();
-Serial.print("Current Angle: ");
-Serial.println(current_angle);
 
 }
 
@@ -303,65 +347,6 @@ boolean is_battery_voltage_OK()
       return true;
   }
 
-}
-#endif
-
-#ifndef NO_HC-SR04
-void HC_SR04_range()
-{
-  unsigned long t1;
-  unsigned long t2;
-  unsigned long pulse_width;
-  float cm;
-  float inches;
-
-  // Hold the trigger pin high for at least 10 us
-  digitalWrite(TRIG_PIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIG_PIN, LOW);
-
-  // Wait for pulse on echo pin
-  t1 = micros();
-  while ( digitalRead(ECHO_PIN) == 0 ) {
-    t2 = micros();
-    pulse_width = t2 - t1;
-    if ( pulse_width > (MAX_DIST + 1000)) {
-      SerialCom->println("HC-SR04: NOT found");
-      return;
-    }
-  }
-
-  // Measure how long the echo pin was held high (pulse width)
-  // Note: the micros() counter will overflow after ~70 min
-
-  t1 = micros();
-  while ( digitalRead(ECHO_PIN) == 1)
-  {
-    t2 = micros();
-    pulse_width = t2 - t1;
-    if ( pulse_width > (MAX_DIST + 1000) ) {
-      SerialCom->println("HC-SR04: Out of range");
-      return;
-    }
-  }
-
-  t2 = micros();
-  pulse_width = t2 - t1;
-
-  // Calculate distance in centimeters and inches. The constants
-  // are found in the datasheet, and calculated from the assumed speed
-  //of sound in air at sea level (~340 m/s).
-  cm = pulse_width / 58.0;
-  inches = pulse_width / 148.0;
-
-  // Print out results
-  if ( pulse_width > MAX_DIST ) {
-    SerialCom->println("HC-SR04: Out of range");
-  } else {
-    SerialCom->print("HC-SR04:");
-    SerialCom->print(cm);
-    SerialCom->println("cm");
-  }
 }
 #endif
 

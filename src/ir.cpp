@@ -27,9 +27,9 @@
             //update the time for the last loop
             prev_millis = current;
 
-            Serial.print(sensor_reading);
-            Serial.print(", ");
-            Serial.println(current_reading);
+            Serial.println(sensor_reading);
+            // Serial.print(", ");
+            // Serial.println(current_reading);
         }
     }
     
@@ -43,5 +43,6 @@
         //y(k) = a * y(k-1) +  (1-a) * x(k)
         //tau = -T/log(a) 
         previous_output = 0.2 * previous_output + 0.8 * rawValue; //check integer division
-        return previous_output;
+        
+        return rawValue;
     }
