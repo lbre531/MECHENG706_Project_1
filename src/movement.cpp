@@ -29,6 +29,11 @@ void initiliseUltrasonic(void){
   digitalWrite(TRIG_PIN, LOW);
 }
 
+STATE homing(){
+  return FORWARD;
+
+}
+
 
 float HC_SR04_range()
 {
@@ -50,7 +55,7 @@ float HC_SR04_range()
     pulse_width = t2 - t1;
     if ( pulse_width > (MAX_DIST + 1000)) {
       //the sensor is out of range
-      return;
+      return -1;
     }
   }
 
@@ -64,7 +69,7 @@ float HC_SR04_range()
     pulse_width = t2 - t1;
     if ( pulse_width > (MAX_DIST + 1000) ) {
       //sensor out of range
-      return;
+      return -1;
     }
   }
 
@@ -95,104 +100,107 @@ float HC_SR04_range()
 //uncomment for testing
 SoftwareSerial BluetoothSerial(10, 11);
 
-void wallFollow(float dist, IRSensorInterface* sensor){
+STATE wallFollow(float dist, IRSensorInterface* sensor){
     double Kp = 1, Ki = 0, Kd = 0;
-    PID_v2 wallPID(Kp, Ki, Kd, PID::Reverse);
+    static PID_v2 wallPID(Kp, Ki, Kd, PID::Reverse);
     
     //initilise variables
     long currentTime = millis();
     static long lastTime;
-    int counter = 0;
-    bool inRange = 0; //variable to track if the robot is in range
+    static int counter = 0;
     double output, input;
     BluetoothSerial.begin(115200);
+    
+    static bool init = 1;
+
+   if(init){
     wallPID.Start(200   ,  // input
               0,   // current output
               200);// setpoint
 
     wallPID.SetOutputLimits(-100, 100);
 
-    while(!inRange){
+    init = 0;
+   }
+    
 
       sensor->readSensor(10); //read sensor with period of 10ms
       input = sensor->getOutput();
 
-      BluetoothSerial.print("input: ");
-      BluetoothSerial.println(input);
-
-      output = wallPID.Run(input);
+      output = wallPID.Run(input);   
+      
       currentTime = millis();
-
-      if((lastTime + 25)  < currentTime){
+    if((lastTime + 25)  < currentTime){
       lastTime =currentTime; //resent last time
 
       //update output
       forwardBias(output);
       
-      // BluetoothSerial.print(" output: ");
+      // BluetoothSerial.print("output: ");
       // BluetoothSerial.println(output);
-
+    
     //check if the robot is about to hit a wall
     if(HC_SR04_range()<dist){
       counter++;
-      if(counter > 3) inRange = 1;
-    }else {
-      counter = 0;
-      inRange = 0;
+      if(counter > 3){
+        init = 1;
+        return STRAFE;
+      }
+    }else{
+        counter = 0;
+
     }
-    }
-    }
-    stop();
+    return FORWARD;
+    }   
 }
 
-void wallFollowRev(float dist, IRSensorInterface* sensor){
+STATE wallFollowRev(float dist, IRSensorInterface* sensor){
     double Kp = 1, Ki = 0, Kd = 0;
-    PID_v2 wallPID(Kp, Ki, Kd, PID::Reverse);
+    static PID_v2 wallPID(Kp, Ki, Kd, PID::Reverse);
     
     //initilise variables
     long currentTime = millis();
     static long lastTime;
-    int counter = 0;
-    bool inRange = 0; //variable to track if the robot is in range
+    static int counter = 0;
     double output, input;
-    BluetoothSerial.begin(115200);
+    //BluetoothSerial.begin(115200);
+    
     wallPID.Start(200   ,  // input
               0,   // current output
               200);// setpoint
 
     wallPID.SetOutputLimits(-100, 100);
 
-    while(!inRange){
+    
+    //poll sensor in every loop
+    sensor->readSensor(10); //read sensor with period of 10ms
+    input = sensor->getOutput();
 
-      sensor->readSensor(10); //read sensor with period of 10ms
-      input = sensor->getOutput();
+      // BluetoothSerial.print("input: ");
+      // BluetoothSerial.println(input);
 
-      BluetoothSerial.print("input: ");
-      BluetoothSerial.println(input);
+    output = wallPID.Run(input);
+    currentTime = millis();
 
-      output = wallPID.Run(input);
-      currentTime = millis();
-
-      if((lastTime + 25)  < currentTime){
+      if((lastTime + 25)  < currentTime){ //run at period of 25ms
       lastTime =currentTime; //resent last time
 
       //update output
-      reverseBias(output);
+      reverseBias(1); //update the output
       
       // BluetoothSerial.print(" output: ");
       // BluetoothSerial.println(output);
 
-    //check if the robot is about to hit a wall
+    //check if the robot is about to hit a wall and change states if so
     if(HC_SR04_range()>(180-dist)){
       counter++;
-      if(counter > 3) inRange = 1;
+      if(counter > 3) return STRAFE;
     }else {
       counter = 0;
-      inRange = 0;
+      return FORWARD;
     }
     }
-    }
-    stop();
+    
 }
 
 
@@ -246,8 +254,8 @@ void forwardBias (int bias) //sensor reading
     
     left_font_motor.writeMicroseconds(1500 + speed_val + bias);
     left_rear_motor.writeMicroseconds(1500 + speed_val + bias);
-    right_rear_motor.writeMicroseconds(1465 - speed_val);
-    right_font_motor.writeMicroseconds(1465 - speed_val);
+    right_rear_motor.writeMicroseconds(1490 - speed_val);
+    right_font_motor.writeMicroseconds(1490 - speed_val);
 }
 
 

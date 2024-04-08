@@ -36,12 +36,7 @@
 //#define NO_HC-SR04 //Uncomment of HC-SR04 ultrasonic ranging sensor is not attached.
 #define NO_BATTERY_V_OK //Uncomment of BATTERY_V_OK if you do not care about battery damage.
 
-//State machine states
-enum STATE {
-  INITIALISING,
-  RUNNING,
-  STOPPED
-};
+
 
 //Refer to Shield Pinouts.jpg for pin locations
 
@@ -163,80 +158,27 @@ STATE initialising() {
 bool PID=0;
 STATE running() {
 
+  fast_flash_double_LED_builtin();
   static unsigned long previous_millis;
   // sensor1.readSensor(50); //poll IR sensor at 50ms period
-  calcAngle(10); //poll the gyro with a period of 5 ms
-  sensor1.readSensor(25);
+  static STATE running_machine_state = HOME;
 
-  //if(millis()%1000 == 0){ Serial.println(sensor1.getOutput()); }
-  //do the thing
-
-  turnAngle(90);
-  // wallFollow(20,&sensor1);
-  // wallFollowRev(20, &sensor1);
-  while(1);
-
-
-  //run the PID controller
-  //const double input = sensor1.getOutput();
-  //Testing
-  // BluetoothSerial.print("input, ");
-  // BluetoothSerial.print(input);
- 
-  //const double output = myPID.Run(input);
-  
-  
-  // BluetoothSerial.print("output, ");
-  // BluetoothSerial.println(output);
-
-  //forwardBias((int)output);
-  //forwardBias(0);
-  //forward();
-  //read_serial_command();
-  fast_flash_double_LED_builtin();
-
-  if (millis() - previous_millis > 250) {  //Arduino style 500ms timed execution statement
-   
-    //forwardBias(output);
-    
-    previous_millis = millis();
-    //get the current angle
-    //current_angle = getAngle();
-    //drive forward with bias
-    
-    //forward();
-    //forwardBias (50);
-
-    //test for turning to angle:
-    // cw();
-    // if(current_angle > 85) return STOPPED;
-    //end test for turning to angle
-
-    //test for straffing with bias
-    //strafe_right_bias(20);
-
-    //test for going straight
-  //  if ((0 < current_angle) && (current_angle < 90)) {
-  //   bias = -50;
-  //   } else if ((0 > current_angle) && (current_angle > -90)) {
-  //   bias = 50;
-  //  } 
-  //  forwardBias(bias); 
-
-
-#ifndef NO_READ_GYRO
-    GYRO_reading();
-#endif
-
-#ifndef NO_HC-SR04
-    HC_SR04_range();
-#endif
-
-#ifndef NO_BATTERY_V_OK
+  #ifndef NO_BATTERY_V_OK
     if (!is_battery_voltage_OK()) return STOPPED;
-#endif
+  #endif
 
-}
+  //Finite-state machine Code
+  switch (running_machine_state) {
+    case HOME:
+      running_machine_state = homing();
+      break;
+    case FORWARD: //Lipo Battery Volage OK
+      running_machine_state = wallFollow(10 ,&sensor1);
+      break;
+    case STRAFE:
+      return STOPPED; //return stopped to main loop
+      break;
+  };
 
   return RUNNING;
 }

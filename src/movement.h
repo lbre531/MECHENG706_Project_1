@@ -1,15 +1,27 @@
 #include <Servo.h>
 #include <ir.h>
 
+
 #ifndef MOVEMENT_H
 #define MOVEMENT_H
+
+
+enum STATE {
+  INITIALISING,
+  RUNNING,
+  STOPPED,
+  HOME,
+  FORWARD,
+  STRAFE
+};
 
 //include function definitions
 void initiliseUltrasonic(void);
 float HC_SR04_range();
 
-void wallFollow(float dist, IRSensorInterface* sensor);
-void wallFollowRev(float dist, IRSensorInterface* sensor);
+STATE wallFollow(float dist, IRSensorInterface* sensor);
+STATE wallFollowRev(float dist, IRSensorInterface* sensor);
+STATE homing();
 
 void turnAngle(float angle);
 
