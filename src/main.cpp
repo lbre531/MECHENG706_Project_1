@@ -31,6 +31,8 @@
 #include <ir.h>
 #include <PID_V2.h>
 
+#include <coordinates.h>
+
 
 //#define NO_READ_GYRO  //Uncomment of GYRO is not attached.
 //#define NO_HC-SR04 //Uncomment of HC-SR04 ultrasonic ranging sensor is not attached.
@@ -68,7 +70,8 @@ HardwareSerial *SerialCom;
 //SerialCom = &BluetoothSerial;
 
 //IR sensors
-IRSensorInterface sensor1;
+IRSensorInterface sensor1; // left
+IRSensorInterface sensor2; // right
 
 //PID Controller
 double Kp = 1, Ki = 0, Kd = 0;
@@ -106,7 +109,8 @@ void setup(void)
   // The Trigger pin will tell the sensor to range find
   initiliseUltrasonic();
   //setup IR sensors
-  sensor1.begin(A5);
+  sensor1.begin(A5); // left
+  sensor2.begin(A2); // right
 
   //setup gyro
   initiliseGyro();
@@ -140,6 +144,14 @@ void loop(void) //main loop
       machine_state =  stopped();
       break;
   };
+
+  forward();
+  delay(500);
+  strafe_right();
+  delay(500);
+  reverse();
+  delay(500);
+  stop();
 }
 
 
@@ -168,7 +180,7 @@ STATE running() {
   #endif
 
   //Path Tracking...
-
+  getCoordinates(200, &sensor1, &sensor2);
 
   //Finite-state machine Code
   switch (running_machine_state) {
