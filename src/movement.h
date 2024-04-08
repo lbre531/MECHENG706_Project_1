@@ -12,7 +12,9 @@ enum STATE {
   STOPPED,
   HOME,
   FORWARD,
-  STRAFE
+  STRAFE,
+  REV,
+  TURN
 };
 
 //include function definitions
@@ -23,7 +25,7 @@ STATE wallFollow(float dist, IRSensorInterface* sensor);
 STATE wallFollowRev(float dist, IRSensorInterface* sensor);
 STATE homing();
 
-void turnAngle(float angle);
+STATE turnAngle(float angle);
 
 void forwardBias (int bias);
 void reverseBias (int bias);
@@ -36,7 +38,7 @@ void stop();
 void ccw (float speed);
 void cw();
 void strafe_left();
-void strafe_right();
+STATE strafe_right();
 
 #endif
 

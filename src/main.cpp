@@ -159,25 +159,35 @@ bool PID=0;
 STATE running() {
 
   fast_flash_double_LED_builtin();
-  static unsigned long previous_millis;
+  
   // sensor1.readSensor(50); //poll IR sensor at 50ms period
-  static STATE running_machine_state = HOME;
+  static STATE running_machine_state = TURN;
 
   #ifndef NO_BATTERY_V_OK
     if (!is_battery_voltage_OK()) return STOPPED;
   #endif
+
+  //Path Tracking...
+
 
   //Finite-state machine Code
   switch (running_machine_state) {
     case HOME:
       running_machine_state = homing();
       break;
-    case FORWARD: //Lipo Battery Volage OK
+    case FORWARD: 
       running_machine_state = wallFollow(10 ,&sensor1);
       break;
     case STRAFE:
-      return STOPPED; //return stopped to main loop
+      running_machine_state = strafe_right(); 
       break;
+    case REV:
+      running_machine_state = wallFollowRev(10, &sensor1);
+      break;
+    case TURN:
+      running_machine_state = turnAngle(60);
+      break;
+      
   };
 
   return RUNNING;
@@ -188,6 +198,7 @@ STATE stopped() {
   static byte counter_lipo_voltage_ok;
   static unsigned long previous_millis;
   int Lipo_level_cal;
+  stop();
   disable_motors();
   slow_flash_LED_builtin();
 

@@ -155,7 +155,7 @@ STATE wallFollow(float dist, IRSensorInterface* sensor){
 }
 
 STATE wallFollowRev(float dist, IRSensorInterface* sensor){
-    double Kp = 1, Ki = 0, Kd = 0;
+       double Kp = 1, Ki = 0, Kd = 0;
     static PID_v2 wallPID(Kp, Ki, Kd, PID::Reverse);
     
     //initilise variables
@@ -163,88 +163,112 @@ STATE wallFollowRev(float dist, IRSensorInterface* sensor){
     static long lastTime;
     static int counter = 0;
     double output, input;
-    //BluetoothSerial.begin(115200);
+    BluetoothSerial.begin(115200);
     
-    wallPID.Start(200   ,  // input
+    static bool init = 1;
+
+   if(init){
+    wallPID.Start(100   ,  // input
               0,   // current output
-              200);// setpoint
+              100);// setpoint
 
     wallPID.SetOutputLimits(-100, 100);
 
-    
-    //poll sensor in every loop
-    sensor->readSensor(10); //read sensor with period of 10ms
-    input = sensor->getOutput();
+    init = 0;
+   }
 
-      // BluetoothSerial.print("input: ");
-      // BluetoothSerial.println(input);
+      sensor->readSensor(10); //read sensor with period of 10ms
+      input = sensor->getOutput();
 
-    output = wallPID.Run(input);
-    currentTime = millis();
-
-      if((lastTime + 25)  < currentTime){ //run at period of 25ms
+      output = wallPID.Run(input);   
+      
+      currentTime = millis();
+    if((lastTime + 25)  < currentTime){
       lastTime =currentTime; //resent last time
 
       //update output
-      reverseBias(1); //update the output
+      reverseBias(output);
       
-      // BluetoothSerial.print(" output: ");
+      // BluetoothSerial.print("output: ");
       // BluetoothSerial.println(output);
-
-    //check if the robot is about to hit a wall and change states if so
-    if(HC_SR04_range()>(180-dist)){
-      counter++;
-      if(counter > 3) return STRAFE;
-    }else {
-      counter = 0;
-      return FORWARD;
-    }
-    }
     
+    //check if the robot is about to hit a wall
+    if(HC_SR04_range()>(160 - dist)){
+      counter++;
+      if(counter > 3){
+        init = 1;
+        return TURN;
+      }
+    }else{
+        counter = 0;
+
+    }
+    return REV;
+    } 
 }
 
 
 //a positive angle is counter clockwise
-void turnAngle(float angle){
-  double Kp = 10, Ki = 0, Kd = 0;
+STATE turnAngle(float angle){
+  double Kp = 0.1, Ki = 0, Kd = 0;
   PID_v2 turnPID(Kp, Ki, Kd, PID::Reverse);
   
-  resetAngle();//set gyro output to zero
   float currentAngle = 0;
-  int counter = 0;
-  
-  turnPID.Start(0   ,  // input
-              0,   // current output
+  static int counter = 0;
+  static bool init = 1;
+
+   if(init){
+    BluetoothSerial.begin(115200);
+    BluetoothSerial.print("init");
+    resetAngle();//set gyro output to zero
+    
+    turnPID.Start(0   ,  // input
+              1,   // current output
               angle);// setpoint
 
-  turnPID.SetOutputLimits(-100, 100);
-  
-  float currentTime = millis();
-  float lastTime = currentTime;
-  float output = 0;
+   turnPID.SetOutputLimits(-1, 1);
 
-  bool done = 0;
-  while(!done){
+    init = 0;
+
+   }
+  
+  long currentTime = millis();
+  static long lastTime = currentTime;
+  float output = 0;
+ 
       //calculate the currentAngle
+      calcAngle(5);//calculate current angle with period of 5
       currentAngle = getAngle();
+      
+      //BluetoothSerial.println(currentAngle);
       output = turnPID.Run(currentAngle);
 
+      //print output for debugging
+      // BluetoothSerial.print(currentAngle);
+      // BluetoothSerial.print(", ");
       currentTime = millis();
       
-    if(lastTime + 25 < currentTime){
+    if(lastTime + 100 < currentTime){
       lastTime = currentTime;
 
-      ccw(output);
+      BluetoothSerial.print(output);
+      BluetoothSerial.print(", ");
+      BluetoothSerial.println(currentAngle);
 
+      ccw(output);
     }
-      if(abs(currentAngle-angle) < 2){
-          counter++;
-          if(counter > 3) done = 1;
-      }else{
-        counter = 0;
-        done = 0;
-      }
-  }
+
+      // if(abs(currentAngle-angle) < 2){
+      //     counter++;
+      //     //BluetoothSerial.println(counter);
+      //     if(counter > 5){
+      //       init = 1;
+      //       return STOPPED;
+      //     } 
+      // }
+
+      return TURN;
+  
 }
 
 
@@ -346,10 +370,18 @@ void strafe_left ()
   right_font_motor.writeMicroseconds(1500 - speed_val);
 }
 
-void strafe_right ()
+STATE strafe_right ()
 {
+  static long t0 = millis();
+
   left_font_motor.writeMicroseconds(1500 + speed_val);
   left_rear_motor.writeMicroseconds(1500 - speed_val);
   right_rear_motor.writeMicroseconds(1500 - speed_val);
   right_font_motor.writeMicroseconds(1500 + speed_val);
+
+  if(t0 + 2000 < millis()) return REV; //reverse after time period of 1 second
+
+  return STRAFE;
+
+
 }
