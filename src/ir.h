@@ -14,10 +14,11 @@ class IRSensorInterface {
 private:
     int pin;
     float current_reading;
+    float b1, b2; //output = b1 * x ^ b2
     
 public:
     IRSensorInterface::IRSensorInterface();
-    void IRSensorInterface::begin(int pin);
+    void IRSensorInterface::begin(int pin, float b1, float b2);
     bool IRSensorInterface::readSensor(long period);
     float IRSensorInterface::getOutput();
     void IRSensorInterface::calibrate();

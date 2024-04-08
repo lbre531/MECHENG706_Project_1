@@ -106,7 +106,7 @@ void setup(void)
   // The Trigger pin will tell the sensor to range find
   initiliseUltrasonic();
   //setup IR sensors
-  sensor1.begin(A5);
+  sensor1.begin(A5, 1844.3, -0.995);
 
   //setup gyro
   initiliseGyro();
@@ -147,8 +147,6 @@ STATE initialising() {
   //initialising
   SerialCom->println("INITIALISING....");
   delay(1000); //One second delay to see the serial string "INITIALISING...."
-  SerialCom->println("Enabling Motors...");
-  enable_motors();
   SerialCom->println("RUNNING STATE...");
   return RUNNING;
 }

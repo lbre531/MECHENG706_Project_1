@@ -7,8 +7,10 @@ SoftwareSerial BluetoothSerial(10,11);
 
     IRSensorInterface::IRSensorInterface(): pin(0), current_reading(0){} 
     
-    void IRSensorInterface::begin(int pin){
+    void IRSensorInterface::begin(int pin, float b1, float b2){
         this->pin = pin;
+        this ->b1 = b1;
+        this ->b2 = b2;
         pinMode(pin, INPUT);
     }
     
@@ -38,7 +40,7 @@ SoftwareSerial BluetoothSerial(10,11);
     }
     
     float IRSensorInterface::getOutput(){
-        return current_reading;
+        return b1 * pow(current_reading , b2);
     }
 
     float IRSensorInterface::applyFilter(float rawValue){      
@@ -58,18 +60,17 @@ SoftwareSerial BluetoothSerial(10,11);
     BluetoothSerial.begin(115200);
 
     static float prevSonar , sonar, ir;
-
+    static long prevTime = millis();
     this->readSensor(10);
 
     sonar = HC_SR04_range();
 
-    if((prevSonar + 2.5 < sonar) && (prevSonar + 5 < sonar)){
-        prevSonar = sonar;
+    long currentTime = millis();
+    
+    if(prevTime + 1000 < currentTime){
+        prevTime = currentTime;
         
         ir = this->getOutput();
-
-        BluetoothSerial.print(sonar);
-        BluetoothSerial.print(", ");
         BluetoothSerial.println(ir);    
     }
     }
