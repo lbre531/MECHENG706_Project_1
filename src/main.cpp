@@ -160,35 +160,14 @@ STATE running() {
 
   fast_flash_double_LED_builtin();
   
-  // sensor1.readSensor(50); //poll IR sensor at 50ms period
-  static STATE running_machine_state = TURN;
+  sensor1.calibrate();
 
   #ifndef NO_BATTERY_V_OK
     if (!is_battery_voltage_OK()) return STOPPED;
   #endif
 
-  //Path Tracking...
 
 
-  //Finite-state machine Code
-  switch (running_machine_state) {
-    case HOME:
-      running_machine_state = homing();
-      break;
-    case FORWARD: 
-      running_machine_state = wallFollow(10 ,&sensor1);
-      break;
-    case STRAFE:
-      running_machine_state = strafe_right(); 
-      break;
-    case REV:
-      running_machine_state = wallFollowRev(10, &sensor1);
-      break;
-    case TURN:
-      running_machine_state = turnAngle(60);
-      break;
-      
-  };
 
   return RUNNING;
 }

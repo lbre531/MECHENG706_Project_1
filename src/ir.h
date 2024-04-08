@@ -20,6 +20,7 @@ public:
     void IRSensorInterface::begin(int pin);
     bool IRSensorInterface::readSensor(long period);
     float IRSensorInterface::getOutput();
+    void IRSensorInterface::calibrate();
 
 private:
     float IRSensorInterface::applyFilter(float rawValue);

@@ -1,5 +1,9 @@
 #include <Arduino.h>  // Include Arduino core library if necessary
 #include "ir.h"
+#include <SoftwareSerial.h>
+#include <movement.h>
+
+SoftwareSerial BluetoothSerial(10,11);
 
     IRSensorInterface::IRSensorInterface(): pin(0), current_reading(0){} 
     
@@ -45,4 +49,27 @@
         previous_output = 0.2 * previous_output + 0.8 * rawValue; //check integer division
         
         return rawValue;
+    }
+
+    /*
+    Method to calibrate sensor, returns sensor readings from sonar while ignoring large values
+    */
+    void IRSensorInterface::calibrate(){
+    BluetoothSerial.begin(115200);
+
+    static float prevSonar , sonar, ir;
+
+    this->readSensor(10);
+
+    sonar = HC_SR04_range();
+
+    if((prevSonar + 2.5 < sonar) && (prevSonar + 5 < sonar)){
+        prevSonar = sonar;
+        
+        ir = this->getOutput();
+
+        BluetoothSerial.print(sonar);
+        BluetoothSerial.print(", ");
+        BluetoothSerial.println(ir);    
+    }
     }
