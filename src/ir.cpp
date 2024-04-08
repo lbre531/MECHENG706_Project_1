@@ -3,8 +3,10 @@
 
     IRSensorInterface::IRSensorInterface(): pin(0), current_reading(0){} 
     
-    void IRSensorInterface::begin(int pin){
+    void IRSensorInterface::begin(int pin, float b1, float b2){
         this->pin = pin;
+        this->b1 = b1;
+        this->b2 = b2;
         pinMode(pin, INPUT);
     }
     
@@ -34,7 +36,7 @@
     }
     
     float IRSensorInterface::getOutput(){
-        return current_reading;
+        return b1*pow(current_reading,b2); //for no change: b1,b2 = 1
     }
 
     float IRSensorInterface::applyFilter(float rawValue){      

@@ -68,7 +68,10 @@ HardwareSerial *SerialCom;
 //SerialCom = &BluetoothSerial;
 
 //IR sensors
-IRSensorInterface sensor1;
+IRSensorInterface frontLeft;
+IRSensorInterface backLeft;
+IRSensorInterface backRight;
+IRSensorInterface back;
 
 //PID Controller
 double Kp = 1, Ki = 0, Kd = 0;
@@ -106,7 +109,11 @@ void setup(void)
   // The Trigger pin will tell the sensor to range find
   initiliseUltrasonic();
   //setup IR sensors
-  sensor1.begin(A5);
+  frontLeft.begin(A5,1844.3, -0.955);//shortRange
+  backLeft.begin(A6,1,1); //longRange
+  backRight.begin(A7,1,1); //longRange
+  back.begin(A2,1,1); //shortRange
+
 
   //setup gyro
   initiliseGyro();
@@ -161,7 +168,7 @@ STATE running() {
   fast_flash_double_LED_builtin();
   
   // sensor1.readSensor(50); //poll IR sensor at 50ms period
-  static STATE running_machine_state = TURN;
+  static STATE running_machine_state = HOME;
 
   #ifndef NO_BATTERY_V_OK
     if (!is_battery_voltage_OK()) return STOPPED;
@@ -176,13 +183,13 @@ STATE running() {
       running_machine_state = homing();
       break;
     case FORWARD: 
-      running_machine_state = wallFollow(10 ,&sensor1);
+      running_machine_state = wallFollow(10 ,&frontLeft);
       break;
     case STRAFE:
       running_machine_state = strafe_right(); 
       break;
     case REV:
-      running_machine_state = wallFollowRev(10, &sensor1);
+      running_machine_state = wallFollowRev(30, &backLeft);
       break;
     case TURN:
       running_machine_state = turnAngle(60);
