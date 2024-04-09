@@ -30,6 +30,7 @@
 #include <SoftwareSerial.h>
 #include <ir.h>
 #include <PID_V2.h>
+#include <coordinates.h>
 
 
 //#define NO_READ_GYRO  //Uncomment of GYRO is not attached.
@@ -175,7 +176,7 @@ STATE running() {
   #endif
 
   //Path Tracking...
-  
+  getCoordinates(100, &backLeft, &backRight);
 
   //Finite-state machine Code
   switch (running_machine_state) {
