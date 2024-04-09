@@ -96,9 +96,9 @@ float HC_SR04_range()
   return cm;
 }
 
-#include <SoftwareSerial.h>
-//uncomment for testing
-SoftwareSerial BluetoothSerial(10, 11);
+// #include <SoftwareSerial.h>
+// //uncomment for testing
+// SoftwareSerial BluetoothSerial(10, 11);
 
 STATE wallFollow(float dist, IRSensorInterface* sensor){
     double Kp = 1, Ki = 0, Kd = 0;
@@ -109,7 +109,7 @@ STATE wallFollow(float dist, IRSensorInterface* sensor){
     static long lastTime;
     static int counter = 0;
     double output, input;
-    BluetoothSerial.begin(115200);
+    // BluetoothSerial.begin(115200);
     
     static bool init = 1;
 
@@ -163,7 +163,7 @@ STATE wallFollowRev(float dist, IRSensorInterface* sensor){
     static long lastTime;
     static int counter = 0;
     double output, input;
-    BluetoothSerial.begin(115200);
+    // BluetoothSerial.begin(115200);
     
     static bool init = 1;
 
@@ -218,8 +218,8 @@ STATE turnAngle(float angle){
   static bool init = 1;
 
    if(init){
-    BluetoothSerial.begin(115200);
-    BluetoothSerial.print("init");
+    // BluetoothSerial.begin(115200);
+    // BluetoothSerial.print("init");
     resetAngle();//set gyro output to zero
     
     turnPID.Start(0   ,  // input
@@ -251,9 +251,9 @@ STATE turnAngle(float angle){
     if(lastTime + 100 < currentTime){
       lastTime = currentTime;
 
-      BluetoothSerial.print(output);
-      BluetoothSerial.print(", ");
-      BluetoothSerial.println(currentAngle);
+      // BluetoothSerial.print(output);
+      // BluetoothSerial.print(", ");
+      // BluetoothSerial.println(currentAngle);
 
       ccw(output);
     }
