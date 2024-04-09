@@ -145,13 +145,7 @@ void loop(void) //main loop
       break;
   };
 
-  forward();
-  delay(500);
-  strafe_right();
-  delay(500);
-  reverse();
-  delay(500);
-  stop();
+  
 }
 
 
@@ -173,7 +167,7 @@ STATE running() {
   fast_flash_double_LED_builtin();
   
   // sensor1.readSensor(50); //poll IR sensor at 50ms period
-  static STATE running_machine_state = TURN;
+  static STATE running_machine_state = HOME;
 
   #ifndef NO_BATTERY_V_OK
     if (!is_battery_voltage_OK()) return STOPPED;
