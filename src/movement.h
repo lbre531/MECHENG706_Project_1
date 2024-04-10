@@ -6,6 +6,7 @@
 #define MOVEMENT_H
 
 
+
 enum STATE {
   INITIALISING,
   RUNNING,
@@ -23,7 +24,7 @@ float HC_SR04_range();
 
 STATE wallFollow(float dist, IRSensorInterface* sensor);
 STATE wallFollowRev(float dist, IRSensorInterface* sensor);
-STATE homing();
+STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterface* back );
 
 STATE turnAngle(float angle);
 

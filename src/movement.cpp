@@ -4,6 +4,7 @@
 #include <PID_V2.h>
 #include <gyro.h>
 #include <ir.h>
+#include <homing.h>
 
 const byte left_front = 46;
 const byte left_rear = 47;
@@ -29,8 +30,36 @@ void initiliseUltrasonic(void){
   digitalWrite(TRIG_PIN, LOW);
 }
 
-STATE homing(){
-  return FORWARD;
+
+
+/*
+Homing takes as inputs pointers to the relevant sensors required to be used, so they are available to be used*/
+STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterface* back ){
+  
+  initStates init_states = INIT;
+  //poll all sensors
+  left->readSensor(25);
+  right->readSensor(25);
+  back->readSensor(25);
+
+
+
+  switch (init_states) {
+    case HOME:
+      init_states = homeInit(left, right);
+      break;
+
+
+}
+  
+  
+  
+  
+  
+  
+  
+  
+  return HOME;
 
 }
 
@@ -203,8 +232,9 @@ STATE wallFollowRev(float dist, IRSensorInterface* sensor){
         counter = 0;
 
     }
-    return REV;
+    
     } 
+  return REV;
 }
 
 
