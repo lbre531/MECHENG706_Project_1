@@ -4,14 +4,23 @@
 
 enum initStates {
   INIT,
-  STRAFE_I,
+  TURN_1,
+  STRAFE_1,
   WALLCHECK,
-  MOVE,
-  TURN_I
+  //long wall
+  REV_I, //-> to small strafe
+  //shortwall
+  STRAFE_2,
+  TURN_2,
+  STRAFE_3, //-> back to wall check
+  //corner
+  STRAFE_4,
+  TURN_3// back to wall check
+
 } ;
 
 //include function definitions
-initStates turnToWall(IRSensorInterface* left);
+initStates turnToWall(IRSensorInterface* left, float* angle);
 // initStates straffeWall(IRSensorInterface* left);
 // initStates isLong(IRSensorInterface*back);
 

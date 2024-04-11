@@ -34,6 +34,61 @@ void initiliseUltrasonic(void){
 //uncomment for testing
 SoftwareSerial BluetoothSerial(10, 11);
 
+
+STATE revGyro(PID_v2* pidController, IRSensorInterface* sensor){
+
+  static bool init = 1;
+  static double output;
+  static int counter = 0;
+  double prevOutput, input;
+
+   if(init){
+    resetAngle();
+    pidController->SetTunings(20,0,0);//kp,ki, kd
+    pidController->Setpoint(0);
+    pidController->SetOutputLimits(-100, 100);
+    pidController->SetControllerDirection(PID::Reverse);
+      
+    BluetoothSerial.begin(115200);
+
+    init = 0;
+   }
+  
+      input = getAngle();
+      
+      prevOutput = output;
+      output = pidController->Run(input);   
+      
+      // currentTime = millis();
+
+    if(prevOutput!= output){//if controller runs
+      // lastTime =currentTime; //resent last time
+
+      //update output
+      reverseBias(output);
+      BluetoothSerial.print("input: ");
+      BluetoothSerial.print(input);
+
+
+      BluetoothSerial.print(", output: ");
+      BluetoothSerial.println(output);
+    
+    //check if the robot is about to hit a wall
+    if(sensor->getOutput()<10){
+      counter++;
+      if(counter > 3){
+        init = 1;
+        return STRAFE;
+      }
+    }else{
+        counter = 0;
+    }
+    }
+    return REV;
+}
+
+
+
 STATE forwardGyro(PID_v2* pidController){
 
   static bool init = 1;
@@ -91,7 +146,7 @@ STATE forwardGyro(PID_v2* pidController){
 
 /*
 Homing takes as inputs pointers to the relevant sensors required to be used, so they are available to be used*/
-STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterface* back ){
+STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterface* back, PID_v2* pidController ){
   
   return FORWARD;
 
@@ -101,13 +156,27 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
   // right->readSensor(25);
   // back->readSensor(25);
 
+  static float angle;
 
 
   switch (init_states) {
-    case HOME:
-      init_states = turnToWall(left);
+    case INIT:
+      init_states = turnToWall(left, &angle);
       break;
-
+    case TURN_1:
+      if( turnAngle(angle, pidController) != STATE::TURN){
+        init_states = STRAFE_1;
+      }
+      break;
+    case  STRAFE_1:
+      //init_states = strafe left to wall
+      break;
+    case WALLCHECK:
+      // check what length wall 
+      //if in correct starting position return FORWARD
+      break;
+    
+    
 
 } 
   return HOME;

@@ -178,7 +178,7 @@ STATE running() {
   
   // sensor1.readSensor(50); //poll IR sensor at 50ms period
   static STATE running_machine_state = TURN;
-
+  static bool prevState = 0;
   #ifndef NO_BATTERY_V_OK
     if (!is_battery_voltage_OK()) return STOPPED;
   #endif
@@ -189,17 +189,23 @@ STATE running() {
   //Finite-state machine Code
   switch (running_machine_state) {
     case HOME:
-      running_machine_state = homing(&backLeft, &frontRight, &back);
+      running_machine_state = homing(&backLeft, &frontRight, &back, &myPID);
       break;
     case FORWARD: 
       running_machine_state = forwardGyro(&myPID);
+      prevState = 0;
       //running_machine_state = wallFollow(40, 10 ,&frontRight, &myPID);
       break;
     case STRAFE:
       running_machine_state = strafe_right(&backLeft); 
+      if(running_machine_state != STRAFE && prevState){
+        running_machine_state = FORWARD;
+      }
       break;
     case REV:
-      running_machine_state = wallFollowRev(30, 10, &backLeft, &back, &myPID);
+      running_machine_state = revGyro(&myPID, &back);
+      prevState = 1;
+      //running_machine_state = wallFollowRev(30, 10, &backLeft, &back, &myPID);
       break;
     case TURN:
       running_machine_state = turnAngle(180, &myPID);

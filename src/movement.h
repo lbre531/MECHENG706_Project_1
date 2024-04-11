@@ -23,9 +23,10 @@ float HC_SR04_range();
 
 STATE wallFollow(float wallDist, float dist, IRSensorInterface* sensor, PID_v2* pidController);
 STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSensorInterface* back, PID_v2* pidController);
-STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterface* back );
+STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterface* back, PID_v2* pidController  );
 
 STATE forwardGyro(PID_v2* pidController);
+STATE revGyro(PID_v2* pidController, IRSensorInterface* sensor);
 
 STATE turnAngle(float angle, PID_v2* pidController);
 
