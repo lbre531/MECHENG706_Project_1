@@ -1,11 +1,10 @@
-#include <Servo.h>
-#include <ir.h>
-
 
 #ifndef MOVEMENT_H
 #define MOVEMENT_H
 
-
+#include <Servo.h>
+#include <ir.h>
+#include <PID_V2.h>
 
 enum STATE {
   INITIALISING,
@@ -22,8 +21,8 @@ enum STATE {
 void initiliseUltrasonic(void);
 float HC_SR04_range();
 
-STATE wallFollow(float dist, IRSensorInterface* sensor);
-STATE wallFollowRev(float dist, IRSensorInterface* sensor);
+STATE wallFollow(float wallDist, float dist, IRSensorInterface* sensor, PID_v2* pidController);
+STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSensorInterface* back, PID_v2* pidController);
 STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterface* back );
 
 STATE turnAngle(float angle);
@@ -39,7 +38,7 @@ void stop();
 void ccw (float speed);
 void cw();
 void strafe_left();
-STATE strafe_right();
+STATE strafe_right(IRSensorInterface* sensor);
 
 #endif
 

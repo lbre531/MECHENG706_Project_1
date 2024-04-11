@@ -3,7 +3,7 @@
 
 
 
-initStates HomeInit(IRSensorInterface* left, IRSensorInterface* right){
+initStates turnToWall(IRSensorInterface* left){
 
     return STRAFE_I;
 }

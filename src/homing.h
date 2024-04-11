@@ -11,7 +11,18 @@ enum initStates {
 } ;
 
 //include function definitions
-initStates homeInit(IRSensorInterface* left, IRSensorInterface* right);
+initStates turnToWall(IRSensorInterface* left);
+// initStates straffeWall(IRSensorInterface* left);
+// initStates isLong(IRSensorInterface*back);
 
+// //found long wall
+// initStates revToStart(IRSensorInterface *back);
+
+// //found short wall
+
+// //straffe out then turn 90degrees 
+// initStates 
+
+//in corner
 
 #endif

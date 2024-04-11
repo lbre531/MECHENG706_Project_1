@@ -65,17 +65,18 @@
 // int speed_change;
 
 //Serial Pointer
-HardwareSerial *SerialCom;
+// HardwareSerial *SerialCom;
 //SerialCom = &BluetoothSerial;
 
 //IR sensors
 IRSensorInterface frontLeft;
 IRSensorInterface backLeft;
-IRSensorInterface backRight;
+IRSensorInterface frontRight;
 IRSensorInterface back;
 
 //PID Controller
 double Kp = 1, Ki = 0, Kd = 0;
+double* input, output, setpoint;
 PID_v2 myPID(Kp, Ki, Kd, PID::Direct);
 
 
@@ -111,9 +112,9 @@ void setup(void)
   initiliseUltrasonic();
   //setup IR sensors
   frontLeft.begin(A5,1844.3, -0.955);//shortRange
-  backLeft.begin(A6,1,1); //longRange
-  backRight.begin(A7,1,1); //longRange
-  back.begin(A2,1,1); //shortRange
+  backLeft.begin(A4,10212,-1.129); //longRange
+  frontRight.begin(A7,1,1); //longRange
+  back.begin(A2,109310,-1.749); //shortRange
 
 
   //setup gyro
@@ -121,11 +122,11 @@ void setup(void)
 
 
   // Setup the Serial port and pointer, the pointer allows switching the debug info through the USB port(Serial) or Bluetooth port(Serial1) with ease.
-  SerialCom = &Serial;
-  SerialCom->begin(115200);
-  SerialCom->println("MECHENG706_Base_Code_25/01/2018");
-  delay(1000);
-  SerialCom->println("Setup....");
+  //  = &Serial;
+  // SerialCom->begin(115200);
+  // SerialCom->println("MECHENG706_Base_Code_25/01/2018");
+  // delay(1000);
+  // SerialCom->println("Setup....");
 
  // BluetoothSerial.begin(115200);
 
@@ -135,6 +136,12 @@ void setup(void)
 
 void loop(void) //main loop
 {
+  backLeft.readSensor(10);
+  frontRight.readSensor(10);
+  back.readSensor(10);
+  frontLeft.readSensor(10);
+
+
   static STATE machine_state = INITIALISING;
   //Finite-state machine Code
   switch (machine_state) {
@@ -153,11 +160,11 @@ void loop(void) //main loop
 
 STATE initialising() {
   //initialising
-  SerialCom->println("INITIALISING....");
+  // SerialCom->println("INITIALISING....");
   delay(1000); //One second delay to see the serial string "INITIALISING...."
-  SerialCom->println("Enabling Motors...");
+  // SerialCom->println("Enabling Motors...");
   enable_motors();
-  SerialCom->println("RUNNING STATE...");
+  // SerialCom->println("RUNNING STATE...");
   return RUNNING;
 }
 
@@ -181,16 +188,16 @@ STATE running() {
   //Finite-state machine Code
   switch (running_machine_state) {
     case HOME:
-      running_machine_state = homing(&backLeft, &backRight, &back);
+      running_machine_state = homing(&backLeft, &frontRight, &back);
       break;
     case FORWARD: 
-      running_machine_state = wallFollow(10 ,&frontLeft);
+      running_machine_state = wallFollow(10, 10 ,&frontLeft, &myPID);
       break;
     case STRAFE:
-      running_machine_state = strafe_right(); 
+      running_machine_state = strafe_right(&backLeft); 
       break;
     case REV:
-      running_machine_state = wallFollowRev(30, &backLeft);
+      running_machine_state = wallFollowRev(30, 10, &backLeft, &back, &myPID);
       break;
     case TURN:
       running_machine_state = turnAngle(60);
@@ -212,19 +219,19 @@ STATE stopped() {
 
   if (millis() - previous_millis > 500) { //print massage every 500ms
     previous_millis = millis();
-    SerialCom->println("STOPPED---------");
+    // SerialCom->println("STOPPED---------");
 
 
 #ifndef NO_BATTERY_V_OK
     //500ms timed if statement to check lipo and output speed settings
     if (is_battery_voltage_OK()) {
-      SerialCom->print("Lipo OK waiting of voltage Counter 10 < ");
-      SerialCom->println(counter_lipo_voltage_ok);
+      // SerialCom->print("Lipo OK waiting of voltage Counter 10 < ");
+      // SerialCom->println(counter_lipo_voltage_ok);
       counter_lipo_voltage_ok++;
       if (counter_lipo_voltage_ok > 10) { //Making sure lipo voltage is stable
         counter_lipo_voltage_ok = 0;
         enable_motors();
-        SerialCom->println("Lipo OK returning to RUN STATE");
+        // SerialCom->println("Lipo OK returning to RUN STATE");
         return RUNNING;
       }
     } else

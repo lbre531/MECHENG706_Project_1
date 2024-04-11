@@ -36,7 +36,11 @@
     }
     
     float IRSensorInterface::getOutput(){
-        return b1*pow(current_reading,b2); //for no change: b1,b2 = 1
+        float result = b1*pow(current_reading,b2);
+        if(result>80){
+            return 80;
+        }
+        return result;  //for no change: b1,b2 = 1   
     }
 
     float IRSensorInterface::applyFilter(float rawValue){      
