@@ -151,8 +151,8 @@ STATE forwardGyro(PID_v2* pidController){
 Homing takes as inputs pointers to the relevant sensors required to be used, so they are available to be used*/
 STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterface* back, PID_v2* pidController ){
   
-  return FORWARD;
-
+  //return FORWARD;
+  // BluetoothSerial.begin(115200);
   initStates init_states = INIT;
   //poll all sensors
   // left->readSensor(25);
@@ -165,6 +165,7 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
   switch (init_states) {
     case INIT:
       init_states = turnToWall(left, &angle);
+      // BluetoothSerial.println(angle);
       break;
     case TURN_1:
       if( turnAngle(angle, pidController) != STATE::TURN){
@@ -173,6 +174,7 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
       break;
     case  STRAFE_1:
       //init_states = strafe left to wall
+
       break;
     case WALLCHECK:
       // check what length wall 
@@ -517,6 +519,15 @@ void strafe_left ()
   left_rear_motor.writeMicroseconds(1500 + speed_val);
   right_rear_motor.writeMicroseconds(1500 + speed_val);
   right_font_motor.writeMicroseconds(1500 - speed_val);
+}
+initStates strafe_left_wall(IRSensorInterface* sensor)
+{
+  left_font_motor.writeMicroseconds(1500 - speed_val);
+  left_rear_motor.writeMicroseconds(1500 + speed_val);
+  right_rear_motor.writeMicroseconds(1500 + speed_val);
+  right_font_motor.writeMicroseconds(1500 - speed_val);
+
+  //check distance-> return next state if close 
 }
 
 STATE strafe_right (IRSensorInterface* sensor)

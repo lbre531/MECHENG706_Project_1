@@ -5,6 +5,7 @@
 #include <Servo.h>
 #include <ir.h>
 #include <PID_V2.h>
+#include <homing.h>
 
 enum STATE {
   INITIALISING,
@@ -42,6 +43,7 @@ void ccw (float speed);
 void cw();
 void strafe_left();
 STATE strafe_right(IRSensorInterface* sensor);
+initStates strafe_left_wall(IRSensorInterface* sensor);
 
 #endif
 
