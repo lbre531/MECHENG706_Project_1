@@ -114,7 +114,7 @@ void setup(void)
   frontLeft.begin(A5,1844.3, -0.955);//shortRange
   backLeft.begin(A4,10212,-1.129); //longRange
   frontRight.begin(A7,219723,-1.653); //longRange
-  back.begin(A2,109310,-1.749); //shortRange
+  back.begin(A6,109310,-1.749); //shortRange
 
 
   //setup gyro
@@ -136,10 +136,10 @@ void setup(void)
 
 void loop(void) //main loop
 {
-  backLeft.readSensor(9); //offset periods to avoid sensors reading at same time
-  frontRight.readSensor(10);
-  back.readSensor(11);
-  frontLeft.readSensor(7);
+  // backLeft.readSensor(9); //offset periods to avoid sensors reading at same time
+  // frontRight.readSensor(10);
+  // back.readSensor(11);
+  // frontLeft.readSensor(7);
   calcAngle(6);
 
 
@@ -177,7 +177,7 @@ STATE running() {
   fast_flash_double_LED_builtin();
   
   // sensor1.readSensor(50); //poll IR sensor at 50ms period
-  static STATE running_machine_state = TURN;
+  static STATE running_machine_state = FORWARD;
   static bool prevState = 0;
   #ifndef NO_BATTERY_V_OK
     if (!is_battery_voltage_OK()) return STOPPED;
@@ -198,7 +198,7 @@ STATE running() {
       break;
     case STRAFE:
       running_machine_state = strafe_right(&backLeft); 
-      if(running_machine_state != STRAFE && prevState){
+      if((running_machine_state != STRAFE) && prevState){
         running_machine_state = FORWARD;
       }
       break;

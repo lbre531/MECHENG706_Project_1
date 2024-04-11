@@ -28,10 +28,6 @@
 
             //update the time for the last loop
             prev_millis = current;
-
-            Serial.println(sensor_reading);
-            // Serial.print(", ");
-            // Serial.println(current_reading);
         }
     }
     
@@ -40,7 +36,7 @@
         if(result>80){
             return 80;
         }
-        return result;  //for no change: b1,b2 = 1   
+        return result;  //change back for correct readings
     }
 
     float IRSensorInterface::applyFilter(float rawValue){      

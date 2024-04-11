@@ -55,24 +55,27 @@ STATE revGyro(PID_v2* pidController, IRSensorInterface* sensor){
    }
   
       input = getAngle();
+      sensor->readSensor(10);
       
       prevOutput = output;
       output = pidController->Run(input);   
       
       // currentTime = millis();
 
-    if(prevOutput!= output){//if controller runs
+    if(prevOutput!= output){//if controller runs //this doesn't account for saturation
       // lastTime =currentTime; //resent last time
 
       //update output
       reverseBias(output);
-      BluetoothSerial.print("input: ");
-      BluetoothSerial.print(input);
+      // BluetoothSerial.print("input: ");
+      // BluetoothSerial.print(input);
 
 
-      BluetoothSerial.print(", output: ");
-      BluetoothSerial.println(output);
-    
+      // BluetoothSerial.print(", output: ");
+      // BluetoothSerial.println(output);
+      BluetoothSerial.print("output: ");
+      BluetoothSerial.println(sensor->getOutput());
+
     //check if the robot is about to hit a wall
     if(sensor->getOutput()<10){
       counter++;
@@ -120,12 +123,12 @@ STATE forwardGyro(PID_v2* pidController){
 
       //update output
       forwardBias(output);
-      BluetoothSerial.print("input: ");
-      BluetoothSerial.print(input);
+      // BluetoothSerial.print("input: ");
+      // BluetoothSerial.print(input);
 
 
-      BluetoothSerial.print(", output: ");
-      BluetoothSerial.println(output);
+      // BluetoothSerial.print(", output: ");
+      // BluetoothSerial.println(output);
     
     //check if the robot is about to hit a wall
     if(HC_SR04_range()<10){
@@ -519,14 +522,25 @@ void strafe_left ()
 STATE strafe_right (IRSensorInterface* sensor)
 {
 
-  static long t0 = millis();
+  static long t0;
+  static bool init = 1;
+
+  
+
+   if(init){
+    t0 = millis();
+    init = 0;
+   }
 
   left_font_motor.writeMicroseconds(1500 + speed_val);
   left_rear_motor.writeMicroseconds(1500 - speed_val);
   right_rear_motor.writeMicroseconds(1500 - speed_val);
   right_font_motor.writeMicroseconds(1500 + speed_val);
 
-  if(t0 + 1000 < millis()) return REV; //reverse after time period of 1 second
+  if(t0 + 1000 < millis()){
+    init = 1;//set up function to be called again
+    return REV;
+  }  //reverse after time period of 1 second
 
   return STRAFE;
 
