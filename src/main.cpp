@@ -113,7 +113,7 @@ void setup(void)
   //setup IR sensors
   frontLeft.begin(A5,1844.3, -0.955);//shortRange
   backLeft.begin(A4,10212,-1.129); //longRange
-  frontRight.begin(A7,1,1); //longRange
+  frontRight.begin(A7,219723,-1.653); //longRange
   back.begin(A2,109310,-1.749); //shortRange
 
 
@@ -136,10 +136,11 @@ void setup(void)
 
 void loop(void) //main loop
 {
-  backLeft.readSensor(10);
+  backLeft.readSensor(9); //offset periods to avoid sensors reading at same time
   frontRight.readSensor(10);
-  back.readSensor(10);
-  frontLeft.readSensor(10);
+  back.readSensor(11);
+  frontLeft.readSensor(7);
+  calcAngle(6);
 
 
   static STATE machine_state = INITIALISING;
@@ -176,7 +177,7 @@ STATE running() {
   fast_flash_double_LED_builtin();
   
   // sensor1.readSensor(50); //poll IR sensor at 50ms period
-  static STATE running_machine_state = HOME;
+  static STATE running_machine_state = TURN;
 
   #ifndef NO_BATTERY_V_OK
     if (!is_battery_voltage_OK()) return STOPPED;
@@ -191,7 +192,8 @@ STATE running() {
       running_machine_state = homing(&backLeft, &frontRight, &back);
       break;
     case FORWARD: 
-      running_machine_state = wallFollow(10, 10 ,&frontLeft, &myPID);
+      running_machine_state = forwardGyro(&myPID);
+      //running_machine_state = wallFollow(40, 10 ,&frontRight, &myPID);
       break;
     case STRAFE:
       running_machine_state = strafe_right(&backLeft); 
@@ -200,7 +202,10 @@ STATE running() {
       running_machine_state = wallFollowRev(30, 10, &backLeft, &back, &myPID);
       break;
     case TURN:
-      running_machine_state = turnAngle(60);
+      running_machine_state = turnAngle(180, &myPID);
+      break;
+    case STOPPED:
+      return STOPPED;
       break;
       
   };

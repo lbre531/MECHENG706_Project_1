@@ -25,7 +25,9 @@ STATE wallFollow(float wallDist, float dist, IRSensorInterface* sensor, PID_v2* 
 STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSensorInterface* back, PID_v2* pidController);
 STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterface* back );
 
-STATE turnAngle(float angle);
+STATE forwardGyro(PID_v2* pidController);
+
+STATE turnAngle(float angle, PID_v2* pidController);
 
 void forwardBias (int bias);
 void reverseBias (int bias);

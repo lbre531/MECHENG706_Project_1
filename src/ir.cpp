@@ -48,7 +48,7 @@
         //apply exponential filter possibly
         //y(k) = a * y(k-1) +  (1-a) * x(k)
         //tau = -T/log(a) 
-        previous_output = 0.2 * previous_output + 0.8 * rawValue; //check integer division
+        previous_output = 0.5 * previous_output + 0.5 * rawValue; //check integer division
         
         return rawValue;
     }

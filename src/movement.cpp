@@ -30,13 +30,70 @@ void initiliseUltrasonic(void){
   digitalWrite(TRIG_PIN, LOW);
 }
 
+#include <SoftwareSerial.h>
+//uncomment for testing
+SoftwareSerial BluetoothSerial(10, 11);
+
+STATE forwardGyro(PID_v2* pidController){
+
+  static bool init = 1;
+  static double output;
+  static int counter = 0;
+  double prevOutput, input;
+
+   if(init){
+    resetAngle();
+    pidController->SetTunings(20,0,0);//kp,ki, kd
+    pidController->Setpoint(0);
+    pidController->SetOutputLimits(-100, 100);
+    pidController->SetControllerDirection(PID::Reverse);
+      
+    BluetoothSerial.begin(115200);
+
+    init = 0;
+   }
+  
+      input = getAngle();
+      
+      prevOutput = output;
+      output = pidController->Run(input);   
+      
+      // currentTime = millis();
+
+    if(prevOutput!= output){//if controller runs
+      // lastTime =currentTime; //resent last time
+
+      //update output
+      forwardBias(output);
+      BluetoothSerial.print("input: ");
+      BluetoothSerial.print(input);
+
+
+      BluetoothSerial.print(", output: ");
+      BluetoothSerial.println(output);
+    
+    //check if the robot is about to hit a wall
+    if(HC_SR04_range()<10){
+      counter++;
+      if(counter > 3){
+        init = 1;
+        return STRAFE;
+      }
+    }else{
+        counter = 0;
+
+    }
+    }
+    return FORWARD;
+}
+
 
 
 /*
 Homing takes as inputs pointers to the relevant sensors required to be used, so they are available to be used*/
 STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterface* back ){
   
-  //return FORWARD;
+  return FORWARD;
 
   initStates init_states = INIT;
   //poll all sensors
@@ -64,7 +121,6 @@ float HC_SR04_range()
   unsigned long t2;
   unsigned long pulse_width;
   float cm;
-  float inches;
 
   // Hold the trigger pin high for at least 10 us
   digitalWrite(TRIG_PIN, HIGH);
@@ -103,7 +159,6 @@ float HC_SR04_range()
   // are found in the datasheet, and calculated from the assumed speed
   //of sound in air at sea level (~340 m/s).
   cm = pulse_width / 58.0;
-  inches = pulse_width / 148.0;
   /*
   //apply filter
     static float previous_output;
@@ -119,9 +174,7 @@ float HC_SR04_range()
   return cm;
 }
 
-#include <SoftwareSerial.h>
-//uncomment for testing
-SoftwareSerial BluetoothSerial(10, 11);
+
 
 STATE wallFollow(float wallDist, float dist, IRSensorInterface* sensor, PID_v2* pidController){
     // double Kp = 1, Ki = 0, Kd = 0;
@@ -136,10 +189,10 @@ STATE wallFollow(float wallDist, float dist, IRSensorInterface* sensor, PID_v2* 
     static bool init = 1;
 
    if(init){
-    pidController->SetTunings(5,0,0);//kp,ki, kd
+    pidController->SetTunings(10,0,1);//kp,ki, kd
     pidController->Setpoint(wallDist);
     pidController->SetOutputLimits(-100, 100);
-    pidController->SetControllerDirection(PID::Reverse);
+    pidController->SetControllerDirection(PID::Direct);
 
     init = 0;
    }
@@ -243,66 +296,57 @@ STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSen
 }
 
 //a positive angle is counter clockwise
-STATE turnAngle(float angle){
-  double Kp = 0.1, Ki = 0, Kd = 0;
-  PID_v2 turnPID(Kp, Ki, Kd, PID::Reverse);
+STATE turnAngle(float angle, PID_v2* pidController){
+  // double Kp = 0.1, Ki = 0, Kd = 0;
+  // PID_v2 turnPID(Kp, Ki, Kd, PID::Reverse);
   
   float currentAngle = 0;
   static int counter = 0;
   static bool init = 1;
 
+  
+
    if(init){
     // BluetoothSerial.begin(115200);
     // BluetoothSerial.print("init");
     resetAngle();//set gyro output to zero
-    
-    turnPID.Start(0   ,  // input
-              1,   // current output
-              angle);// setpoint
+    pidController->SetTunings(0.07,0.01,0.01);//kp,ki, kd
+    pidController->Setpoint(angle);
+    pidController->SetOutputLimits(-1, 1);
+    pidController->SetControllerDirection(PID::Reverse);
 
-   turnPID.SetOutputLimits(-1, 1);
+    BluetoothSerial.begin(115200);
 
     init = 0;
 
    }
+
+    double input, prevOutput;
+    static double output;
   
-  long currentTime = millis();
-  static long lastTime = currentTime;
-  float output = 0;
- 
-      //calculate the currentAngle
-      calcAngle(5);//calculate current angle with period of 5
-      currentAngle = getAngle();
+      input = getAngle();
       
-      //BluetoothSerial.println(currentAngle);
-      output = turnPID.Run(currentAngle);
-
-      //print output for debugging
-      // BluetoothSerial.print(currentAngle);
-      // BluetoothSerial.print(", ");
-      currentTime = millis();
+      prevOutput = output;
+      output = pidController->Run(input);   
       
-    if(lastTime + 100 < currentTime){
-      lastTime = currentTime;
+      // currentTime = millis();
 
-      // BluetoothSerial.print(output);
-      // BluetoothSerial.print(", ");
-      // BluetoothSerial.println(currentAngle);
+     if(prevOutput!= output){//if controller runs
 
       ccw(output);
+      BluetoothSerial.println(angle - input);
+
+
     }
 
-      // if(abs(currentAngle-angle) < 2){
-      //     counter++;
-      //     //BluetoothSerial.println(counter);
-      //     if(counter > 5){
-      //       init = 1;
-      //       return STOPPED;
-      //     } 
-      // }
+
+      if(abs(input-angle) < 2){    
+            init = 1;
+            BluetoothSerial.println("end");
+            return STOPPED;
+      }
 
       return TURN;
-  
 }
 
 

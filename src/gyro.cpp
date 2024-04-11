@@ -4,7 +4,7 @@
 //define global variables
 #define GYRO_PIN A3
 
-float gyroSensitivity = 0.0065;
+float gyroSensitivity = 0.0060;
 
 int zeroGyroVoltage = 0;
 float currentAngle = 0;
