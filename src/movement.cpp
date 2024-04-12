@@ -30,9 +30,9 @@ void initiliseUltrasonic(void){
   digitalWrite(TRIG_PIN, LOW);
 }
 
-#include <SoftwareSerial.h>
-//uncomment for testing
-SoftwareSerial BluetoothSerial(10, 11);
+// #include <SoftwareSerial.h>
+// //uncomment for testing
+// SoftwareSerial BluetoothSerial(10, 11);
 
 
 STATE revGyro(PID_v2* pidController, IRSensorInterface* sensor){
@@ -49,7 +49,7 @@ STATE revGyro(PID_v2* pidController, IRSensorInterface* sensor){
     pidController->SetOutputLimits(-100, 100);
     pidController->SetControllerDirection(PID::Reverse);
       
-    BluetoothSerial.begin(115200);
+    // BluetoothSerial.begin(115200);
 
     init = 0;
    }
@@ -73,8 +73,8 @@ STATE revGyro(PID_v2* pidController, IRSensorInterface* sensor){
 
       // BluetoothSerial.print(", output: ");
       // BluetoothSerial.println(output);
-      BluetoothSerial.print("output: ");
-      BluetoothSerial.println(sensor->getOutput());
+      // BluetoothSerial.print("output: ");
+      // BluetoothSerial.println(sensor->getOutput());
 
     //check if the robot is about to hit a wall
     if(sensor->getOutput()<10){
@@ -106,7 +106,7 @@ STATE forwardGyro(PID_v2* pidController){
     pidController->SetOutputLimits(-100, 100);
     pidController->SetControllerDirection(PID::Reverse);
       
-    BluetoothSerial.begin(115200);
+    // BluetoothSerial.begin(115200);
 
     init = 0;
    }
@@ -147,12 +147,21 @@ STATE forwardGyro(PID_v2* pidController){
 
 
 
+
+
 /*
 Homing takes as inputs pointers to the relevant sensors required to be used, so they are available to be used*/
 STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterface* back, PID_v2* pidController ){
   
   //return FORWARD;
-  // BluetoothSerial.begin(115200);
+  static bool init = 1;
+
+  if (init){
+    //  BluetoothSerial.begin(115200);
+    init = 0;
+  }
+  
+ 
   initStates init_states = INIT;
   //poll all sensors
   // left->readSensor(25);
@@ -160,25 +169,32 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
   // back->readSensor(25);
 
   static float angle;
-
+  static wallPos states;
 
   switch (init_states) {
     case INIT:
       init_states = turnToWall(left, &angle);
-      // BluetoothSerial.println(angle);
+      // BluetoothSerial.println(angle); 
       break;
     case TURN_1:
-      if( turnAngle(angle, pidController) != STATE::TURN){
+      if(turnAngle(angle, pidController) != STATE::TURN){
         init_states = STRAFE_1;
       }
       break;
     case  STRAFE_1:
+      
       //init_states = strafe left to wall
 
       break;
     case WALLCHECK:
-      // check what length wall 
-      //if in correct starting position return FORWARD
+      states = wallCheck(back);
+      if(states == long_wall){
+
+      }if(states == short_wall){
+
+      }if(states == corner_wall){
+
+      }
       break;
     
     
@@ -258,7 +274,7 @@ STATE wallFollow(float wallDist, float dist, IRSensorInterface* sensor, PID_v2* 
     static int counter = 0;
     static double output;
     double input, prevOutput;
-    BluetoothSerial.begin(115200);
+    // BluetoothSerial.begin(115200);
     
     static bool init = 1;
 
@@ -294,7 +310,7 @@ STATE wallFollow(float wallDist, float dist, IRSensorInterface* sensor, PID_v2* 
       // BluetoothSerial.println(output);
     
     //check if the robot is about to hit a wall
-    BluetoothSerial.print(HC_SR04_range());
+    // BluetoothSerial.print(HC_SR04_range());
 
     if(HC_SR04_range()<dist){
       counter++;
@@ -318,7 +334,7 @@ STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSen
     static int counter = 0;
     static double output;
     double input, prevOutput;
-    BluetoothSerial.begin(115200);
+    // BluetoothSerial.begin(115200);
     
     static bool init = 1;
 
@@ -347,12 +363,12 @@ STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSen
 
       //update output
       reverseBias(output);
-      BluetoothSerial.print("input: ");
-      BluetoothSerial.print(input);
+      // BluetoothSerial.print("input: ");
+      // BluetoothSerial.print(input);
 
 
-      BluetoothSerial.print(", output: ");
-      BluetoothSerial.println(output);
+      // BluetoothSerial.print(", output: ");
+      // BluetoothSerial.println(output);
     
     //check if the robot is about to hit a wall
     if(back->getOutput()<dist){
@@ -389,7 +405,7 @@ STATE turnAngle(float angle, PID_v2* pidController){
     pidController->SetOutputLimits(-1, 1);
     pidController->SetControllerDirection(PID::Reverse);
 
-    BluetoothSerial.begin(115200);
+    // BluetoothSerial.begin(115200);
 
     init = 0;
 
@@ -408,7 +424,7 @@ STATE turnAngle(float angle, PID_v2* pidController){
      if(prevOutput!= output){//if controller runs
 
       ccw(output);
-      BluetoothSerial.println(angle - input);
+      // BluetoothSerial.println(angle - input);
 
 
     }
@@ -416,7 +432,7 @@ STATE turnAngle(float angle, PID_v2* pidController){
 
       if(abs(input-angle) < 2){    
             init = 1;
-            BluetoothSerial.println("end");
+            // BluetoothSerial.println("end");
             return STOPPED;
       }
 
@@ -522,12 +538,16 @@ void strafe_left ()
 }
 initStates strafe_left_wall(IRSensorInterface* sensor)
 {
+  sensor->readSensor(10);
   left_font_motor.writeMicroseconds(1500 - speed_val);
   left_rear_motor.writeMicroseconds(1500 + speed_val);
   right_rear_motor.writeMicroseconds(1500 + speed_val);
   right_font_motor.writeMicroseconds(1500 - speed_val);
 
-  //check distance-> return next state if close 
+  if(sensor->getOutput()<8) {
+    return WALLCHECK;
+  }
+  return STRAFE_1;
 }
 
 STATE strafe_right (IRSensorInterface* sensor)

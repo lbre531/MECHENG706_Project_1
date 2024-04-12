@@ -30,7 +30,7 @@
 #include <SoftwareSerial.h>
 #include <ir.h>
 #include <PID_V2.h>
-// #include <coordinates.h>
+#include <coordinates.h>
 
 
 //#define NO_READ_GYRO  //Uncomment of GYRO is not attached.
@@ -172,6 +172,9 @@ STATE initialising() {
 
 
 bool PID=0;
+
+
+
 STATE running() {
 
   fast_flash_double_LED_builtin();
@@ -184,7 +187,7 @@ STATE running() {
   #endif
 
   //Path Tracking...
-  // getCoordinates(100, &backLeft, &backRight);
+  getCoordinates(500, &backLeft, &frontRight);
 
   //Finite-state machine Code
   switch (running_machine_state) {

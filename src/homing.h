@@ -19,10 +19,16 @@ enum initStates {
 
 } ;
 
+enum wallPos{
+  long_wall,
+  short_wall,
+  corner_wall
+};
+
 //include function definitions
 initStates turnToWall(IRSensorInterface* left, float* angle);
 // initStates straffeWall(IRSensorInterface* left);
-// initStates isLong(IRSensorInterface*back);
+wallPos wallCheck(IRSensorInterface* back);
 
 // //found long wall
 // initStates revToStart(IRSensorInterface *back);
