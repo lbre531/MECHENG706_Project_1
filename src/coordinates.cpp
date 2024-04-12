@@ -9,85 +9,77 @@
 SoftwareSerial BluetoothSerial(10, 11);
 
 
-bool initial = true;
-
-
+bool initial1 = true, initial2 = true;
 float x, y;
 float xTable, yTable, angle;
+float xOffset = 15, yOffset = 0; // add/subtract
 
 
-float xOffset = 0, yOffset = 0; // add/subtract
-
-
-float getCoordinates(long period, IRSensorInterface *LeftFront, IRSensorInterface *RightFront)
+float getCoordinates(long period, IRSensorInterface *Left, IRSensorInterface *Right)
 {
     BluetoothSerial.begin(115200);
 
 
-    LeftFront->readSensor(10);
-    RightFront->readSensor(10);
+    Left->readSensor(10);
+    Right->readSensor(10);
 
 
     static long prev_millis;
     long current = millis();
 
 
-    if (initial)
+    if (initial1)
     {
         xTable = HC_SR04_range();
-        yTable = LeftFront->getOutput();
+        //yTable = LeftFront->getOutput();
 
 
-        initial = false;
+        initial1 = false;
     }
+
+
 
 
     if ((prev_millis + period) < current)
     {
-        //BluetoothSerial.print("\t");
+        // Copy values from PuTTy and use Excel file "CoordinatesMapped.xlsx"
         BluetoothSerial.print(x);
         BluetoothSerial.print(" ");
         BluetoothSerial.println(y);
 
 
-        // BluetoothSerial.print(HC_SR04_range());
-        // BluetoothSerial.print("\t");
-        // BluetoothSerial.print(LeftFront->getOutput());
-        // BluetoothSerial.print("\t");
-        // BluetoothSerial.println(getAngle());
-
-
         x = xTable - HC_SR04_range() + xOffset; // ultrasonic
-        // BluetoothSerial.println("entered x");
+        y = -Left->getOutput() + yOffset; // left IR
 
 
-        y = -LeftFront->getOutput() + yOffset; // left IR
-        // BluetoothSerial.println("entered y");
+        if (initial2)
+        {
+            yTable = Right->getOutput();
+
+
+            initial2 = false;
+        }
+
+
+        if (y < -70)
+        {
+            yOffset = -35;
+
+
+            y = -(yTable - Right->getOutput()) + yOffset; // right IR
+        }
+
+
 
 
         angle = getAngle(); // gyro
 
 
-        if (abs(getAngle()) > 170)
+        if (abs(getAngle()) > 170) // if we turn 180 degrees midway
         {
             x = HC_SR04_range() + xOffset; // ultrasonic
-            // BluetoothSerial.println("entered x");
-
-
-            y = LeftFront->getOutput() - yTable + yOffset; // left IR
-            // BluetoothSerial.println("entered y");
+            y = Left->getOutput() - yTable + yOffset; // left IR
         }
-
-
-        // x = HC_SR04_range() * cos(angle) + xOffset;
-        // //BluetoothSerial.println("entered xcos");
-        // if (angle >= 0) { // angle is positive, CW
-        //     y = -HC_SR04_range() * sin(angle) + yOffset;
-        //     //BluetoothSerial.println("entered ysin1");
-        // } else { // angle is negative, CCW
-        //     y = HC_SR04_range() * sin(angle + yOffset);
-        //     //BluetoothSerial.println("entered ysin2");
-        // }
 
 
         // update the time for the last loop

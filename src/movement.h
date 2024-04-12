@@ -42,7 +42,7 @@ void stop();
 void ccw (float speed);
 void cw();
 void strafe_left();
-STATE strafe_right(IRSensorInterface* sensor);
+STATE strafe_right(IRSensorInterface* sensor, long time);
 initStates strafe_left_wall(IRSensorInterface* sensor);
 
 #endif

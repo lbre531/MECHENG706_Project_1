@@ -3,19 +3,24 @@
 #include <ir.h>
 
 enum initStates {
-  INIT,
+  POLL,
   TURN_1,
   STRAFE_1,
-  WALLCHECK,
+  ULT,
   //long wall
-  REV_I, //-> to small strafe
-  //shortwall
+  REV_1, //-> return FORWARD
+
+  //short wall
   STRAFE_2,
   TURN_2,
-  STRAFE_3, //-> back to wall check
-  //corner
-  STRAFE_4,
-  TURN_3// back to wall check
+  ULT_2,
+    //long
+    STRAFE_3,
+    //short
+    TURN_3,
+    REV_2
+    
+  //assume in corner and strafe out and in
 
 } ;
 
@@ -25,11 +30,17 @@ enum wallPos{
   corner_wall
 };
 
+
+
 //include function definitions
+initStates poll(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterface* back, float* angle);
+
 initStates turnToWall(IRSensorInterface* left, float* angle);
 // initStates straffeWall(IRSensorInterface* left);
 wallPos wallCheck(IRSensorInterface* back);
 
+initStates readUlt(IRSensorInterface* back);
+initStates readUltOnly();
 // //found long wall
 // initStates revToStart(IRSensorInterface *back);
 

@@ -20,6 +20,7 @@ public:
     void IRSensorInterface::begin(int pin, float b1, float b2);
     bool IRSensorInterface::readSensor(long period);
     float IRSensorInterface::getOutput();
+    float IRSensorInterface::poll_return();
 
 private:
     float IRSensorInterface::applyFilter(float rawValue);

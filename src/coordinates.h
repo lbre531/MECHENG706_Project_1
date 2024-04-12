@@ -6,7 +6,7 @@
 #include "ir.h"
 
 
-float getCoordinates(long period, IRSensorInterface *LeftFront, IRSensorInterface *RightFront);
+float getCoordinates(long period, IRSensorInterface *Left, IRSensorInterface *Right);
 
 
 #endif

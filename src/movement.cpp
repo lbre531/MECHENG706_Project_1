@@ -55,7 +55,6 @@ STATE revGyro(PID_v2* pidController, IRSensorInterface* sensor){
    }
   
       input = getAngle();
-      sensor->readSensor(10);
       
       prevOutput = output;
       output = pidController->Run(input);   
@@ -77,7 +76,7 @@ STATE revGyro(PID_v2* pidController, IRSensorInterface* sensor){
       // BluetoothSerial.println(sensor->getOutput());
 
     //check if the robot is about to hit a wall
-    if(sensor->getOutput()<10){
+    if(sensor->poll_return()<10){
       counter++;
       if(counter > 3){
         init = 1;
@@ -162,42 +161,75 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
   }
   
  
-  initStates init_states = INIT;
+  static initStates init_states = POLL;
   //poll all sensors
   // left->readSensor(25);
   // right->readSensor(25);
   // back->readSensor(25);
 
   static float angle;
-  static wallPos states;
 
   switch (init_states) {
-    case INIT:
-      init_states = turnToWall(left, &angle);
-      // BluetoothSerial.println(angle); 
-      break;
+    case POLL:
+        init_states = poll(left,right,back, &angle);
+        // BluetoothSerial.print(angle);
+    break;
     case TURN_1:
-      if(turnAngle(angle, pidController) != STATE::TURN){
-        init_states = STRAFE_1;
-      }
-      break;
-    case  STRAFE_1:
+        
+        if(turnAngle(angle, pidController) != STATE::TURN){
+          init_states = STRAFE_1;
+        }else{
+          init_states = TURN_1;
+        }
+    break;
+    case STRAFE_1:
+        init_states= strafe_left_wall(left);
+    break;
+    case ULT:
       
-      //init_states = strafe left to wall
-
-      break;
-    case WALLCHECK:
-      states = wallCheck(back);
-      if(states == long_wall){
-
-      }if(states == short_wall){
-
-      }if(states == corner_wall){
-
+      init_states = readUlt(back);
+    break;
+    case REV_1: //long walls
+      if(wallFollowRev(10, 10, left, back, pidController) != STATE::REV){
+        return FORWARD;
+      }else{
+        init_states = REV_1;
       }
+    break;
+    case STRAFE_2: //strafe right for 500ms
+      if(strafe_right(right, 500) != STATE::STRAFE){
+        init_states = TURN_2;
+      }else{
+        init_states = STRAFE_2;
+      }
+        //turn
+    break;
+    case TURN_2:
+        if(turnAngle(90, pidController) != STATE::TURN){
+          init_states = ULT_2;
+        }else{
+          init_states = TURN_2;
+        }
+    break;
+    case ULT_2:
+        init_states = readUltOnly();
+    break;
+      case STRAFE_3://the ult reads long
+        if(strafe_left_wall(left) != STRAFE_1){
+          return RUNNING;
+        }
       break;
-    
-    
+      case TURN_3://the ult reads short
+        if(turnAngle(-90, pidController) != STATE::TURN){
+          init_states = REV_2;
+        }
+      break;
+      case REV_2:
+        if(wallFollowRev(10, 10, left, back, pidController) != STATE::REV){
+        return FORWARD;
+        }
+      break;
+      
 
 } 
   return HOME;
@@ -371,7 +403,7 @@ STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSen
       // BluetoothSerial.println(output);
     
     //check if the robot is about to hit a wall
-    if(back->getOutput()<dist){
+    if(back->poll_return()<dist){
       counter++;
       if(counter > 3){
         init = 1;
@@ -538,19 +570,37 @@ void strafe_left ()
 }
 initStates strafe_left_wall(IRSensorInterface* sensor)
 {
-  sensor->readSensor(10);
+  
+  static bool init = 0;
+
+  static long startTime = millis();
+
+  
+
   left_font_motor.writeMicroseconds(1500 - speed_val);
   left_rear_motor.writeMicroseconds(1500 + speed_val);
   right_rear_motor.writeMicroseconds(1500 + speed_val);
   right_font_motor.writeMicroseconds(1500 - speed_val);
 
-  if(sensor->getOutput()<8) {
-    return WALLCHECK;
+  if(sensor->poll_return()<8) { 
+    // BluetoothSerial.println(sensor->poll_return());
+    if(!init){
+      //  BluetoothSerial.println("jengjernnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwingjwrengjerwngjrengjengorewngojrewngwo");
+      startTime = millis();
+      init = 1;
+    }    
   }
+
+  if (startTime + 1000 < millis() && init){
+      // BluetoothSerial.println("end");
+      init = 0;
+      return ULT;
+  }
+
   return STRAFE_1;
 }
 
-STATE strafe_right (IRSensorInterface* sensor)
+STATE strafe_right (IRSensorInterface* sensor, long time)
 {
 
   static long t0;
@@ -568,7 +618,7 @@ STATE strafe_right (IRSensorInterface* sensor)
   right_rear_motor.writeMicroseconds(1500 - speed_val);
   right_font_motor.writeMicroseconds(1500 + speed_val);
 
-  if(t0 + 1000 < millis()){
+  if(t0 + time < millis()){
     init = 1;//set up function to be called again
     return REV;
   }  //reverse after time period of 1 second

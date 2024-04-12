@@ -9,6 +9,11 @@
         this->b2 = b2;
         pinMode(pin, INPUT);
     }
+
+    float IRSensorInterface::poll_return(){
+        current_reading = analogRead(pin);
+        return this->getOutput();
+    }
     
     //method that reads the previos sensor value at a given period and applies digital filter
     //inputs : period is the time in milliseconds for each loop
