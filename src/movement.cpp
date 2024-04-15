@@ -17,7 +17,7 @@ Servo right_rear_motor;  // create servo object to control Vex Motor Controller 
 Servo right_font_motor;  // create servo object to control Vex Motor Controller 29
 
 
-int speed_val = 150;
+int speed_val = 200;
 //include the code for functions
 
 const int TRIG_PIN = 48;
@@ -146,7 +146,9 @@ STATE forwardGyro(PID_v2* pidController){
 
 
 
-
+#include <SoftwareSerial.h>
+//uncomment for testing
+SoftwareSerial BluetoothSerial(10, 11);
 
 /*
 Homing takes as inputs pointers to the relevant sensors required to be used, so they are available to be used*/
@@ -156,7 +158,7 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
   static bool init = 1;
 
   if (init){
-    //  BluetoothSerial.begin(115200);
+     BluetoothSerial.begin(115200);
     init = 0;
   }
   
@@ -190,9 +192,11 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
       init_states = readUlt(back);
     break;
     case REV_1: //long walls
-      if(wallFollowRev(10, 10, left, back, pidController) != STATE::REV){
+      
+      if(wallFollowRev(10, 10, left, back, pidController,10,0,0) != STATE::REV){
         return FORWARD;
       }else{
+        BluetoothSerial.print("State is REV");
         init_states = REV_1;
       }
     break;
@@ -225,7 +229,7 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
         }
       break;
       case REV_2:
-        if(wallFollowRev(10, 10, left, back, pidController) != STATE::REV){
+        if(wallFollowRev(10, 10, left, back, pidController, 10,0,0) != STATE::REV){
         return FORWARD;
         }
       break;
@@ -298,7 +302,7 @@ float HC_SR04_range()
 
 
 
-STATE wallFollow(float wallDist, float dist, IRSensorInterface* sensor, PID_v2* pidController){
+STATE wallFollow(float wallDist, float dist, IRSensorInterface* sensor, PID_v2* pidController, double kp, double ki, double kd){
     // double Kp = 1, Ki = 0, Kd = 0;
     // static PID_v2 wallPID(Kp, Ki, Kd, PID::Reverse);
     
@@ -311,15 +315,13 @@ STATE wallFollow(float wallDist, float dist, IRSensorInterface* sensor, PID_v2* 
     static bool init = 1;
 
    if(init){
-    pidController->SetTunings(10,0,1);//kp,ki, kd
+    pidController->SetTunings(kp,ki,kd);//kp,ki, kd
     pidController->Setpoint(wallDist);
     pidController->SetOutputLimits(-100, 100);
-    pidController->SetControllerDirection(PID::Direct);
+    pidController->SetControllerDirection(PID::Reverse);
 
     init = 0;
    }
-    
-
       sensor->readSensor(10); //read sensor with period of 10ms
       
       input = sensor->getOutput();
@@ -354,11 +356,12 @@ STATE wallFollow(float wallDist, float dist, IRSensorInterface* sensor, PID_v2* 
         counter = 0;
 
     }
-    return FORWARD;
+    
     }   
+    return FORWARD_WALL;
 }
 
-STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSensorInterface* back, PID_v2* pidController){
+STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSensorInterface* back, PID_v2* pidController, double kp, double ki, double kd){
         // double Kp = 1, Ki = 0, Kd = 0;
     // static PID_v2 wallPID(Kp, Ki, Kd, PID::Reverse);
     
@@ -371,17 +374,14 @@ STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSen
     static bool init = 1;
 
    if(init){
-    pidController->SetTunings(5,0,0);//kp,ki, kd
+    pidController->SetTunings(kp,ki,kd);//kp,ki, kd
     pidController->Setpoint(wallDist);
     pidController->SetOutputLimits(-100, 100);
     pidController->SetControllerDirection(PID::Direct);
-
+    BluetoothSerial.begin(115200);
     init = 0;
    }
-    
-
-      // sensor->readSensor(10); //read sensor with period of 10ms
-      // back->readSensor(10);
+      sensor->readSensor(10); //read sensor with period of 10ms
       
       input = sensor->getOutput();
       
@@ -389,32 +389,27 @@ STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSen
       output = pidController->Run(input);   
       
       // currentTime = millis();
-
+    BluetoothSerial.println("running");
     if(prevOutput!= output){//if controller runs
       // lastTime =currentTime; //resent last time
-
+    
       //update output
       reverseBias(output);
-      // BluetoothSerial.print("input: ");
-      // BluetoothSerial.print(input);
 
+    // if(back->poll_return()<dist){
+    //   counter++;
+    //   BluetoothSerial.println("end");
+    //   if(counter > 3){
+    //     init = 1;
+        
+    //     return STRAFE;
+    //   }
+    // }else{
+    //     counter = 0;
+    // }
 
-      // BluetoothSerial.print(", output: ");
-      // BluetoothSerial.println(output);
-    
-    //check if the robot is about to hit a wall
-    if(back->poll_return()<dist){
-      counter++;
-      if(counter > 3){
-        init = 1;
-        return STRAFE;
-      }
-    }else{
-        counter = 0;
-
-    }
-    return REV;
-    } 
+    }   
+  return BACK_WALL;
 }
 
 //a positive angle is counter clockwise
@@ -606,7 +601,7 @@ STATE strafe_right (IRSensorInterface* sensor, long time)
   static long t0;
   static bool init = 1;
 
-  
+  BluetoothSerial.println("STRAFE");
 
    if(init){
     t0 = millis();

@@ -180,7 +180,7 @@ STATE running() {
   fast_flash_double_LED_builtin();
   
   // sensor1.readSensor(50); //poll IR sensor at 50ms period
-  static STATE running_machine_state = HOME;
+  static STATE running_machine_state = BACK_WALL;
   static bool prevState = 0;
   #ifndef NO_BATTERY_V_OK
     if (!is_battery_voltage_OK()) return STOPPED;
@@ -192,22 +192,48 @@ STATE running() {
   }
  
 
+  float initReading = 0;
+  static bool init_ = 1;
+  static bool firstStrafe = 0;
+
   //Finite-state machine Code
-  switch (running_machine_state) {
+
+    switch (running_machine_state){
+    case FORWARD_WALL:
+       
+        if(init_){
+        initReading = frontRight.poll_return();
+        init_ = 0;
+        }      
+        running_machine_state = wallFollow(10, 10, &frontLeft, &myPID, 15, 0 ,1);
+        prevState = 0;
+
+    break;
+    case  BACK_WALL:
+        if(init_){
+        initReading = frontRight.poll_return();
+        init_ = 0;
+        }      
+        running_machine_state = wallFollowRev(initReading, 10, &frontRight, &back,  &myPID, 15, 0 ,1);
+        
+    break;
+
     case HOME:
       running_machine_state = homing(&backLeft, &frontRight, &back, &myPID);
       break;
     case FORWARD: 
+      //running_machine_state = forwardGyro(&myPID);
       running_machine_state = forwardGyro(&myPID);
-      prevState = 0;
-      //running_machine_state = wallFollow(40, 10 ,&frontRight, &myPID);
       break;
     case STRAFE:
+      init_ = 1;
       running_machine_state = strafe_right(&backLeft, 1000); 
+
       if((running_machine_state != STRAFE) && prevState){
         running_machine_state = FORWARD;
       }
       break;
+
     case REV:
       running_machine_state = revGyro(&myPID, &back);
       prevState = 1;

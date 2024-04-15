@@ -4,21 +4,21 @@
 
 enum initStates {
   POLL,
-  TURN_1,
-  STRAFE_1,
+  TURN_1, //turn to other side
+  STRAFE_1, //straffe right to wall
   ULT,
   //long wall
-  REV_1, //-> return FORWARD
+  REV_1, //-> return FORWARD //not working // wall follow forward
 
   //short wall
-  STRAFE_2,
-  TURN_2,
+  STRAFE_2, //straffe left
+  TURN_2, // turn anti clockwise
   ULT_2,
     //long
-    STRAFE_3,
+    STRAFE_3, //straffe right to wall
     //short
-    TURN_3,
-    REV_2
+    TURN_3, //turn clockwise
+    REV_2 //drive forward function
     
   //assume in corner and strafe out and in
 
