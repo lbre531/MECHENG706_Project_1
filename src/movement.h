@@ -10,6 +10,7 @@
 enum STATE {
   FORWARD_WALL,
   BACK_WALL,
+  SMALLSTRAFE,
   
   INITIALISING,
   RUNNING,
@@ -18,7 +19,8 @@ enum STATE {
   FORWARD,
   STRAFE,
   REV,
-  TURN
+  TURN,
+  STRAFERIGHT
 };
 
 //include function definitions
@@ -44,9 +46,13 @@ void reverse ();
 void stop();
 void ccw (float speed);
 void cw();
-void strafe_left();
+void strafe_left_bais(float bias);
+
+initStates strafe_PID (float distance, PID_v2* pidController);
 STATE strafe_right(IRSensorInterface* sensor, long time);
 initStates strafe_left_wall(IRSensorInterface* sensor);
+STATE strafe_right_wall(IRSensorInterface* sensor);
+STATE strafe_left (long time);
 
 #endif
 

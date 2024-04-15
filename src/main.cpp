@@ -180,7 +180,7 @@ STATE running() {
   fast_flash_double_LED_builtin();
   
   // sensor1.readSensor(50); //poll IR sensor at 50ms period
-  static STATE running_machine_state = BACK_WALL;
+  static STATE running_machine_state = HOME;
   static bool prevState = 0;
   #ifndef NO_BATTERY_V_OK
     if (!is_battery_voltage_OK()) return STOPPED;
@@ -195,17 +195,23 @@ STATE running() {
   float initReading = 0;
   static bool init_ = 1;
   static bool firstStrafe = 0;
+  static float sensorResult=50;
 
   //Finite-state machine Code
 
     switch (running_machine_state){
+    case SMALLSTRAFE:
+        if(strafe_left(200) != STRAFE){
+          running_machine_state = BACK_WALL;
+        }
+    break; 
     case FORWARD_WALL:
        
         if(init_){
         initReading = frontRight.poll_return();
         init_ = 0;
         }      
-        running_machine_state = wallFollow(10, 10, &frontLeft, &myPID, 15, 0 ,1);
+        running_machine_state = wallFollow(9, 10, &frontLeft, &myPID, 20, 0 ,1);
         prevState = 0;
 
     break;
@@ -214,7 +220,7 @@ STATE running() {
         initReading = frontRight.poll_return();
         init_ = 0;
         }      
-        running_machine_state = wallFollowRev(initReading, 10, &frontRight, &back,  &myPID, 15, 0 ,1);
+        running_machine_state = wallFollowRev(9, 10, &frontRight, &back,  &myPID, 20, 0 ,0);
         
     break;
 
@@ -224,13 +230,21 @@ STATE running() {
     case FORWARD: 
       //running_machine_state = forwardGyro(&myPID);
       running_machine_state = forwardGyro(&myPID);
+      frontRight.readSensor(10);
+      sensorResult= frontRight.getOutput();\
+      prevState = 0;
+      
       break;
     case STRAFE:
       init_ = 1;
-      running_machine_state = strafe_right(&backLeft, 1000); 
+      running_machine_state = strafe_right(&backLeft, 850);
 
       if((running_machine_state != STRAFE) && prevState){
         running_machine_state = FORWARD;
+      }
+
+      if(sensorResult < 40 && !prevState){
+        running_machine_state = STRAFERIGHT;
       }
       break;
 
@@ -245,6 +259,13 @@ STATE running() {
     case STOPPED:
       return STOPPED;
       break;
+
+    case STRAFERIGHT:
+      running_machine_state = strafe_right_wall(&frontRight);
+    break;
+    default:
+      
+    break;
       
   };
 
@@ -331,24 +352,24 @@ boolean is_battery_voltage_OK()
 
   if (Lipo_level_cal > 0 && Lipo_level_cal < 160) {
     previous_millis = millis();
-    SerialCom->print("Lipo level:");
-    SerialCom->print(Lipo_level_cal);
-    SerialCom->print("%");
+    // SerialCom->print("Lipo level:");
+    // SerialCom->print(Lipo_level_cal);
+    // SerialCom->print("%");
     // SerialCom->print(" : Raw Lipo:");
     // SerialCom->println(raw_lipo);
-    SerialCom->println("");
+    // SerialCom->println("");
     Low_voltage_counter = 0;
     return true;
   } else {
     if (Lipo_level_cal < 0)
-      SerialCom->println("Lipo is Disconnected or Power Switch is turned OFF!!!");
+      // SerialCom->println("Lipo is Disconnected or Power Switch is turned OFF!!!");
     else if (Lipo_level_cal > 160)
-      SerialCom->println("!Lipo is Overchanged!!!");
+      // SerialCom->println("!Lipo is Overchanged!!!");
     else {
-      SerialCom->println("Lipo voltage too LOW, any lower and the lipo with be damaged");
-      SerialCom->print("Please Re-charge Lipo:");
-      SerialCom->print(Lipo_level_cal);
-      SerialCom->println("%");
+      // SerialCom->println("Lipo voltage too LOW, any lower and the lipo with be damaged");
+      // SerialCom->print("Please Re-charge Lipo:");
+      // SerialCom->print(Lipo_level_cal);
+      // SerialCom->println("%");
     }
 
     Low_voltage_counter++;

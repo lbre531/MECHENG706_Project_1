@@ -7,10 +7,10 @@ PID_v2 homePID(0,0,0,PID_v2::Reverse);
 
 initStates readUltOnly(){
     
-    if(HC_SR04_range()< 80){
-        return TURN_3;
+    if(HC_SR04_range()> 120){ //if long side
+        return STRAFE_3;
     }
-    return STRAFE_3;
+    return TURN_3;
 }
 
 
@@ -22,7 +22,7 @@ initStates readUlt(IRSensorInterface* back){
     
     back_s = back->poll_return();
 
-    float result = ultraCoolSuperPowers + back_s;
+    float result = ultraCoolSuperPowers;
 
     if (result > 100){
        return REV_1;

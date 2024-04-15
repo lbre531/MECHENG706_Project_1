@@ -40,7 +40,9 @@ STATE revGyro(PID_v2* pidController, IRSensorInterface* sensor){
   static bool init = 1;
   static double output;
   static int counter = 0;
-  double prevOutput, input;
+  double prevOutput, input;  
+
+  static unsigned long lastTime = millis();
 
    if(init){
     resetAngle();
@@ -66,26 +68,23 @@ STATE revGyro(PID_v2* pidController, IRSensorInterface* sensor){
 
       //update output
       reverseBias(output);
-      // BluetoothSerial.print("input: ");
-      // BluetoothSerial.print(input);
-
-
-      // BluetoothSerial.print(", output: ");
-      // BluetoothSerial.println(output);
-      // BluetoothSerial.print("output: ");
-      // BluetoothSerial.println(sensor->getOutput());
-
-    //check if the robot is about to hit a wall
-    if(sensor->poll_return()<10){
+      
+    }
+ 
+ if(lastTime + 100 < millis()){
+     lastTime = millis();
+     
+     if(sensor->poll_return()<10) { 
       counter++;
-      if(counter > 3){
+      if(counter > 10){
         init = 1;
+        counter = 0;
         return STRAFE;
       }
-    }else{
+      }else{
         counter = 0;
-    }
-    }
+      }
+ } 
     return REV;
 }
 
@@ -129,8 +128,10 @@ STATE forwardGyro(PID_v2* pidController){
       // BluetoothSerial.print(", output: ");
       // BluetoothSerial.println(output);
     
+
+    
     //check if the robot is about to hit a wall
-    if(HC_SR04_range()<10){
+    if(HC_SR04_range()<13){
       counter++;
       if(counter > 3){
         init = 1;
@@ -162,6 +163,7 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
     init = 0;
   }
   
+  bool breakMF = 0;
  
   static initStates init_states = POLL;
   //poll all sensors
@@ -170,8 +172,32 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
   // back->readSensor(25);
 
   static float angle;
+  // static initStates prevState = POLL;
 
   switch (init_states) {
+    // case SMALL_STRAFE_I:
+        
+    //     if(strafe_left(400) != STRAFE){
+    //         breakMF = 1;
+    //     }
+        
+    //     BluetoothSerial.println("PrevState = ");
+    //     BluetoothSerial.println(prevState);
+
+
+    //     if(prevState == ULT && breakMF){
+    //       breakMF = 0;
+    //       init_states = REV_1;
+    //     }
+    //     if(prevState == TURN_3 && breakMF){
+    //       breakMF = 0;
+    //       init_states = REV_2;
+    //     }
+
+
+
+
+    // break;
     case POLL:
         init_states = poll(left,right,back, &angle);
         // BluetoothSerial.print(angle);
@@ -193,10 +219,10 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
     break;
     case REV_1: //long walls
       
-      if(wallFollowRev(10, 10, left, back, pidController,10,0,0) != STATE::REV){
-        return FORWARD;
+      if(wallFollowRev(10, 10, left, back, pidController,20,0,0) != STATE::BACK_WALL){
+        breakMF = 1;
       }else{
-        BluetoothSerial.print("State is REV");
+        
         init_states = REV_1;
       }
     break;
@@ -219,23 +245,38 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
         init_states = readUltOnly();
     break;
       case STRAFE_3://the ult reads long
-        if(strafe_left_wall(left) != STRAFE_1){
-          return RUNNING;
+        //initStates state = strafe_left_wall(left);
+        initStates state = strafe_left_wall(left);
+        // BluetoothSerial.print(state!= STRAFE_1);
+        
+        if(state!= STRAFE_1){
+          breakMF = 1;
+          //return RUNNING;
         }
+        init_states = STRAFE_3;
       break;
       case TURN_3://the ult reads short
-        if(turnAngle(-90, pidController) != STATE::TURN){
-          init_states = REV_2;
+        if(turnAngle(-75, pidController) != STATE::TURN){
+          // prevState = TURN_3;
+          breakMF = 1;
         }
       break;
       case REV_2:
         if(wallFollowRev(10, 10, left, back, pidController, 10,0,0) != STATE::REV){
-        return FORWARD;
+        breakMF = 1;
+        //return FORWARD;
         }
       break;
-      
+      default:
+        //catch other case
+      break;
 
 } 
+
+  if(breakMF){
+    return FORWARD_WALL;
+  }
+  
   return HOME;
 
 }
@@ -362,7 +403,7 @@ STATE wallFollow(float wallDist, float dist, IRSensorInterface* sensor, PID_v2* 
 }
 
 STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSensorInterface* back, PID_v2* pidController, double kp, double ki, double kd){
-        // double Kp = 1, Ki = 0, Kd = 0;
+    // double Kp = 1, Ki = 0, Kd = 0;
     // static PID_v2 wallPID(Kp, Ki, Kd, PID::Reverse);
     
     //initilise variables
@@ -371,14 +412,17 @@ STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSen
     double input, prevOutput;
     // BluetoothSerial.begin(115200);
     
-    static bool init = 1;
+    volatile static bool init = 1;
+
+    volatile static bool init_ = 0;
+    static unsigned long lastTime;
 
    if(init){
     pidController->SetTunings(kp,ki,kd);//kp,ki, kd
     pidController->Setpoint(wallDist);
     pidController->SetOutputLimits(-100, 100);
-    pidController->SetControllerDirection(PID::Direct);
-    BluetoothSerial.begin(115200);
+    pidController->SetControllerDirection(PID::Reverse);
+    // BluetoothSerial.begin(115200);
     init = 0;
    }
       sensor->readSensor(10); //read sensor with period of 10ms
@@ -389,27 +433,38 @@ STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSen
       output = pidController->Run(input);   
       
       // currentTime = millis();
-    BluetoothSerial.println("running");
+    //BluetoothSerial.println("running");
     if(prevOutput!= output){//if controller runs
       // lastTime =currentTime; //resent last time
     
       //update output
       reverseBias(output);
 
-    // if(back->poll_return()<dist){
-    //   counter++;
-    //   BluetoothSerial.println("end");
-    //   if(counter > 3){
-    //     init = 1;
-        
-    //     return STRAFE;
-    //   }
-    // }else{
-    //     counter = 0;
-    // }
+    //if(sensor->poll_return()<8) { 
+    // BluetoothSerial.println(sensor->poll_return());
 
-    }   
-  return BACK_WALL;
+  }  
+
+ if(lastTime + 100 < millis()){
+     lastTime = millis();
+     
+     if(back->poll_return()<8) { 
+      BluetoothSerial.print("Sensor reading <8");
+      counter++;
+      BluetoothSerial.println(counter);
+      if(counter > 10){
+        init = 1;
+        counter = 0;
+        return STOPPED;
+      }
+      }else{
+        counter = 0;
+      }
+   
+  }
+
+
+return BACK_WALL;
 }
 
 //a positive angle is counter clockwise
@@ -556,52 +611,155 @@ void cw ()
   right_font_motor.writeMicroseconds(1500 + speed_val);
 }
 
-void strafe_left ()
+void strafe_left_bias(float bias)
 {
-  left_font_motor.writeMicroseconds(1500 - speed_val);
-  left_rear_motor.writeMicroseconds(1500 + speed_val);
-  right_rear_motor.writeMicroseconds(1500 + speed_val);
-  right_font_motor.writeMicroseconds(1500 - speed_val);
+  left_font_motor.writeMicroseconds(1500 - bias*speed_val);
+  left_rear_motor.writeMicroseconds(1500 + bias*speed_val);
+  right_rear_motor.writeMicroseconds(1500 + bias*speed_val);
+  right_font_motor.writeMicroseconds(1500 - bias*speed_val);
 }
 initStates strafe_left_wall(IRSensorInterface* sensor)
 {
-  
-  static bool init = 0;
+   static unsigned long lastTime = millis();
+  volatile static int counter;
+  volatile static bool init = 1;
+  if(init){
+    BluetoothSerial.print("init Count");
+    BluetoothSerial.println(counter);
+    init=0;
+  }
 
-  static long startTime = millis();
 
-  
+
+ 
 
   left_font_motor.writeMicroseconds(1500 - speed_val);
   left_rear_motor.writeMicroseconds(1500 + speed_val);
   right_rear_motor.writeMicroseconds(1500 + speed_val);
   right_font_motor.writeMicroseconds(1500 - speed_val);
 
-  if(sensor->poll_return()<8) { 
-    // BluetoothSerial.println(sensor->poll_return());
-    if(!init){
-      //  BluetoothSerial.println("jengjernnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnwingjwrengjerwngjrengjengorewngojrewngwo");
-      startTime = millis();
-      init = 1;
-    }    
+  if(lastTime + 100 < millis()){
+     lastTime = millis();
+     
+     if(sensor->poll_return()<8) { 
+      counter++;
+      BluetoothSerial.println(counter);
+      if(counter > 5){
+        init = 1;
+        counter = 0;
+        return ULT;
+      }
+      }else{
+        counter = 0;
+      }
+   
   }
 
-  if (startTime + 1000 < millis() && init){
-      // BluetoothSerial.println("end");
-      init = 0;
-      return ULT;
-  }
 
   return STRAFE_1;
 }
+
+
+
+
+
+STATE strafe_right_wall(IRSensorInterface* sensor)
+{
+   static unsigned long lastTime = millis();
+  volatile static int counter;
+  volatile static bool init = 1;
+  if(init){
+    // BluetoothSerial.print("init Count");
+    BluetoothSerial.println(counter);
+    init=0;
+  }
+
+
+
+ 
+
+  left_font_motor.writeMicroseconds(1500 + speed_val);
+  left_rear_motor.writeMicroseconds(1500 - speed_val);
+  right_rear_motor.writeMicroseconds(1500 - speed_val);
+  right_font_motor.writeMicroseconds(1500 + speed_val);
+
+  if(lastTime + 100 < millis()){
+     lastTime = millis();
+     
+     if(sensor->poll_return()<8) { 
+      counter++;
+      // BluetoothSerial.println(counter);
+      if(counter > 5){
+        init = 1;
+        counter = 0;
+        return SMALLSTRAFE;
+      }
+      }else{
+        counter = 0;
+      }
+   
+  }
+
+
+  return STRAFERIGHT;
+}
+
+initStates strafe_PID (float distance, PID_v2* pidController){
+  float currentAngle = 0;
+  static int counter = 0;
+  static bool init = 1;
+
+  
+
+   if(init){
+    // BluetoothSerial.begin(115200);
+    // BluetoothSerial.print("init");
+    resetAngle();//set gyro output to zero
+    pidController->SetTunings(0.15,0,0.01);//kp,ki, kd
+    pidController->Setpoint(distance);
+    pidController->SetOutputLimits(-1, 1);
+    pidController->SetControllerDirection(PID::Reverse);
+
+    // BluetoothSerial.begin(115200);
+
+    init = 0;
+
+   }
+
+    double input, prevOutput;
+    static double output;
+  
+      input = getAngle();
+      
+      prevOutput = output;
+      output = pidController->Run(input);   
+      
+      // currentTime = millis();
+
+     if(prevOutput!= output){//if controller runs
+
+      strafe_left_bias(output);
+      // BluetoothSerial.println(angle - input);
+
+
+    }
+
+
+      // if(abs(input-distance) < 0.5){    
+      //       init = 1;
+      //       // BluetoothSerial.println("end");
+      //       return ULT;
+      // }
+
+      return STRAFE_1 ;
+}
+
 
 STATE strafe_right (IRSensorInterface* sensor, long time)
 {
 
   static long t0;
   static bool init = 1;
-
-  BluetoothSerial.println("STRAFE");
 
    if(init){
     t0 = millis();
@@ -620,51 +778,29 @@ STATE strafe_right (IRSensorInterface* sensor, long time)
 
   return STRAFE;
 
+}
 
+STATE strafe_left (long time)
+{
 
+  static long t0;
+  static bool init = 1;
 
-  // sensor->readSensor(10);
-  
-  // static int counter = 0;
+   if(init){
+    t0 = millis();
+    init = 0;
+   }
 
-  // static float initialDistance = sensor->getOutput();
-  // float currentOutput;
-  
-  
-  // static bool init = 1;
+  left_font_motor.writeMicroseconds(1500 - speed_val);
+  left_rear_motor.writeMicroseconds(1500 + speed_val);
+  right_rear_motor.writeMicroseconds(1500 + speed_val);
+  right_font_motor.writeMicroseconds(1500 - speed_val);
 
+  if(t0 + time < millis()){
+    init = 1;//set up function to be called again
+    return REV;
+  }  //reverse after time period of 1 second
 
-  // currentOutput = sensor-> getOutput(); 
-  //  if(init){
-  //   initialDistance = currentOutput;
-
-  //   init = 0;
-  //  }
-
-  // left_font_motor.writeMicroseconds(1500 + speed_val);
-  // left_rear_motor.writeMicroseconds(1500 - speed_val);
-  // right_rear_motor.writeMicroseconds(1500 - speed_val);
-  // right_font_motor.writeMicroseconds(1500 + speed_val);
-
-
-
-  // BluetoothSerial.print(initialDistance);
-  // BluetoothSerial.print(" ,");
-  // BluetoothSerial.println(currentOutput);
-  
-
-
-  // if(abs(currentOutput - initialDistance) > 15 ){
-  //   counter ++;
-  //   if(counter >30){
-  //       init = 1;
-  //       return REV;
-  //   }
-  // }else{
-  //   counter = 0;
-  // }
-
-  // return STRAFE;
-
+  return STRAFE;
 
 }

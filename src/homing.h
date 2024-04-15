@@ -3,10 +3,11 @@
 #include <ir.h>
 
 enum initStates {
+  SMALL_STRAFE_I,
   POLL,
   TURN_1, //turn to other side
   STRAFE_1, //straffe right to wall
-  ULT,
+  ULT, //if long -> SMALL STRAFE
   //long wall
   REV_1, //-> return FORWARD //not working // wall follow forward
 
@@ -15,10 +16,10 @@ enum initStates {
   TURN_2, // turn anti clockwise
   ULT_2,
     //long
-    STRAFE_3, //straffe right to wall
+    STRAFE_3, //STRAFE_LEFT
     //short
     TURN_3, //turn clockwise
-    REV_2 //drive forward function
+    REV_2 //drive forward function //STRAFE
     
   //assume in corner and strafe out and in
 
