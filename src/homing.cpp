@@ -19,13 +19,11 @@ initStates readUlt(IRSensorInterface* back){
     float back_s;
     
     float ultraCoolSuperPowers = HC_SR04_range();
-    
-    back_s = back->poll_return();
 
     float result = ultraCoolSuperPowers;
 
     if (result > 100){
-       return REV_1;
+       return SMALL_STRAFE_I;
     }
     return STRAFE_2;
 

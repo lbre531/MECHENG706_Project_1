@@ -12,14 +12,15 @@ enum initStates {
   REV_1, //-> return FORWARD //not working // wall follow forward
 
   //short wall
-  STRAFE_2, //straffe left
-  TURN_2, // turn anti clockwise
-  ULT_2,
+  STRAFE_2, //straffe right
+  TURN_2, // turn clockwise
+  ULT_2, //check long or short
     //long
     STRAFE_3, //STRAFE_LEFT
+    //SMALL_STRAFE_I -> REV 1
     //short
     TURN_3, //turn clockwise
-    REV_2 //drive forward function //STRAFE
+    REV_2 //drive backwards
     
   //assume in corner and strafe out and in
 

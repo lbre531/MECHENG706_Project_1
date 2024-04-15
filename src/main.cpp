@@ -264,7 +264,8 @@ STATE running() {
       running_machine_state = strafe_right_wall(&frontRight);
     break;
     default:
-      
+      //FORGET IF ISSUES ARISE
+      running_machine_state = FORWARD_WALL;
     break;
       
   };

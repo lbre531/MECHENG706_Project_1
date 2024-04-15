@@ -172,32 +172,17 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
   // back->readSensor(25);
 
   static float angle;
-  // static initStates prevState = POLL;
 
   switch (init_states) {
-    // case SMALL_STRAFE_I:
+    case SMALL_STRAFE_I:
         
-    //     if(strafe_left(400) != STRAFE){
-    //         breakMF = 1;
-    //     }
-        
-    //     BluetoothSerial.println("PrevState = ");
-    //     BluetoothSerial.println(prevState);
+        if(strafe_right(back,200) != STRAFE){
+            init_states = REV_1;
+        }else{
+          init_states = SMALL_STRAFE_I;
+        }
 
-
-    //     if(prevState == ULT && breakMF){
-    //       breakMF = 0;
-    //       init_states = REV_1;
-    //     }
-    //     if(prevState == TURN_3 && breakMF){
-    //       breakMF = 0;
-    //       init_states = REV_2;
-    //     }
-
-
-
-
-    // break;
+    break;
     case POLL:
         init_states = poll(left,right,back, &angle);
         // BluetoothSerial.print(angle);
@@ -221,8 +206,7 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
       
       if(wallFollowRev(10, 10, left, back, pidController,20,0,0) != STATE::BACK_WALL){
         breakMF = 1;
-      }else{
-        
+      }else{      
         init_states = REV_1;
       }
     break;
@@ -250,7 +234,7 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
         // BluetoothSerial.print(state!= STRAFE_1);
         
         if(state!= STRAFE_1){
-          breakMF = 1;
+          init_states = SMALL_STRAFE_I;
           //return RUNNING;
         }
         init_states = STRAFE_3;
@@ -622,16 +606,10 @@ initStates strafe_left_wall(IRSensorInterface* sensor)
 {
    static unsigned long lastTime = millis();
   volatile static int counter;
-  volatile static bool init = 1;
-  if(init){
-    BluetoothSerial.print("init Count");
-    BluetoothSerial.println(counter);
-    init=0;
-  }
-
-
-
- 
+  // volatile static bool init = 1;
+  // if(init){
+  //   init=0;
+  // }
 
   left_font_motor.writeMicroseconds(1500 - speed_val);
   left_rear_motor.writeMicroseconds(1500 + speed_val);
@@ -645,14 +623,13 @@ initStates strafe_left_wall(IRSensorInterface* sensor)
       counter++;
       BluetoothSerial.println(counter);
       if(counter > 5){
-        init = 1;
+        // init = 1;
         counter = 0;
         return ULT;
       }
       }else{
         counter = 0;
-      }
-   
+      }  
   }
 
 
