@@ -49,7 +49,7 @@ float getCoordinates(long period, IRSensorInterface *Left, IRSensorInterface *Ri
                 initial2 = false;
             }
 
-            yOffset = -35;
+            yOffset = -75;
 
             y = -(yTable - Right->getOutput()) + yOffset; // right IR
 
