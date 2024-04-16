@@ -176,7 +176,7 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
   switch (init_states) {
     case SMALL_STRAFE_I:
         
-        if(strafe_right(back,180) != STRAFE){
+        if(strafe_right(back,120) != STRAFE){
             init_states = REV_1;
         }else{
           init_states = SMALL_STRAFE_I;
@@ -202,7 +202,8 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
       init_states = readUlt(back);
     break;
     case REV_1: //long walls     
-      if(wallFollowRev(10, 10, left, back, pidController,20,0,0) != STATE::BACK_WALL){
+      //if(wallFollowRev(12, 10, left, back, pidController,25,0,4) != STATE::BACK_WALL){
+        if(revGyro(pidController, back) != STATE::REV){
         breakMF = 1;
       }else{      
         init_states = REV_1;
@@ -497,7 +498,7 @@ STATE turnAngle(float angle, PID_v2* pidController){
     }
 
 
-      if(abs(input-angle) < 2){    
+      if(abs(input-angle) < 3.5){    
             init = 1;
             // BluetoothSerial.println("end");
             return STOPPED;

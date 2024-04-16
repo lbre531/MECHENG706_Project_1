@@ -64,12 +64,14 @@ float getCoordinates(long period, IRSensorInterface *Left, IRSensorInterface *Ri
         }
 
           // Makes sure values printed in PuTTy are not wild outliers
-        if ((abs(x - xPrev) < 30) && (abs(y - yPrev) < 30))
-        {
+        if ((abs(x - xPrev) < 30) && (abs(y - yPrev) < 30) )
+        {  
+
             // Copy values from PuTTy and use Excel file "CoordinatesMapped.xlsx"
             BluetoothSerial.print(x);
             BluetoothSerial.print(" ");
             BluetoothSerial.println(y);
+
         }
 
 

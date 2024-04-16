@@ -201,7 +201,7 @@ STATE running() {
 
     switch (running_machine_state){
     case SMALLSTRAFE:
-        if(strafe_left(210) != STRAFE){
+        if(strafe_left(115) != STRAFE){
           running_machine_state = BACK_WALL;
         }
     break; 
@@ -211,7 +211,7 @@ STATE running() {
         initReading = frontRight.poll_return();
         init_ = 0;
         }      
-        running_machine_state = wallFollow(8, 10, &frontLeft, &myPID, 20, 0 ,2);
+        running_machine_state = wallFollow(8, 10, &frontLeft, &myPID, 20, 0 ,30);
         prevState = 0;
 
     break;
@@ -220,7 +220,7 @@ STATE running() {
         initReading = frontRight.poll_return();
         init_ = 0;
         }      
-        running_machine_state = wallFollowRev(8, 10, &frontRight, &back,  &myPID, 20, 0 ,6);
+        running_machine_state = wallFollowRev(7, 10, &frontRight, &back,  &myPID, 25, 0 ,33 );
         
     break;
 
@@ -237,13 +237,13 @@ STATE running() {
       break;
     case STRAFE:
       init_ = 1;
-      running_machine_state = strafe_right(&backLeft, 650);
+      running_machine_state = strafe_right(&backLeft, 500);
 
       if((running_machine_state != STRAFE) && prevState){
         running_machine_state = FORWARD;
       }
 
-      if(sensorResult < 40 && !prevState){
+      if(sensorResult < 34 && !prevState){
         running_machine_state = STRAFERIGHT;
       }
       break;
