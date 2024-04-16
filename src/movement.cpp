@@ -76,7 +76,7 @@ STATE revGyro(PID_v2* pidController, IRSensorInterface* sensor){
      
      if(sensor->poll_return()<10) { 
       counter++;
-      if(counter > 10){
+      if(counter > 3){
         init = 1;
         counter = 0;
         return STRAFE;
@@ -147,9 +147,9 @@ STATE forwardGyro(PID_v2* pidController){
 
 
 
-#include <SoftwareSerial.h>
+// #include <SoftwareSerial.h>
 //uncomment for testing
-SoftwareSerial BluetoothSerial(10, 11);
+// SoftwareSerial BluetoothSerial(10, 11);
 
 /*
 Homing takes as inputs pointers to the relevant sensors required to be used, so they are available to be used*/
@@ -159,7 +159,7 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
   static bool init = 1;
 
   if (init){
-     BluetoothSerial.begin(115200);
+    //  BluetoothSerial.begin(115200);
     init = 0;
   }
   
@@ -176,7 +176,7 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
   switch (init_states) {
     case SMALL_STRAFE_I:
         
-        if(strafe_right(back,200) != STRAFE){
+        if(strafe_right(back,180) != STRAFE){
             init_states = REV_1;
         }else{
           init_states = SMALL_STRAFE_I;
@@ -199,11 +199,9 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
         init_states= strafe_left_wall(left);
     break;
     case ULT:
-      
       init_states = readUlt(back);
     break;
-    case REV_1: //long walls
-      
+    case REV_1: //long walls     
       if(wallFollowRev(10, 10, left, back, pidController,20,0,0) != STATE::BACK_WALL){
         breakMF = 1;
       }else{      
@@ -232,12 +230,12 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
         //initStates state = strafe_left_wall(left);
         initStates state = strafe_left_wall(left);
         // BluetoothSerial.print(state!= STRAFE_1);
+        init_states = STRAFE_3;
         
         if(state!= STRAFE_1){
           init_states = SMALL_STRAFE_I;
-          //return RUNNING;
         }
-        init_states = STRAFE_3;
+        
       break;
       case TURN_3://the ult reads short
         if(turnAngle(-75, pidController) != STATE::TURN){
@@ -246,7 +244,7 @@ STATE homing(IRSensorInterface* left, IRSensorInterface* right, IRSensorInterfac
         }
       break;
       case REV_2:
-        if(wallFollowRev(10, 10, left, back, pidController, 10,0,0) != STATE::REV){
+        if(wallFollowRev(12, 10, left, back, pidController, 10,0,0) != STATE::REV){
         breakMF = 1;
         //return FORWARD;
         }
@@ -347,9 +345,11 @@ STATE wallFollow(float wallDist, float dist, IRSensorInterface* sensor, PID_v2* 
 
     init = 0;
    }
-      sensor->readSensor(10); //read sensor with period of 10ms
+      // sensor->readSensor(10); //read sensor with period of 10ms
       
-      input = sensor->getOutput();
+      // input = sensor->getOutput();
+      
+      input = sensor->poll_return();
       
       prevOutput = output;
       output = pidController->Run(input);   
@@ -409,10 +409,11 @@ STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSen
     // BluetoothSerial.begin(115200);
     init = 0;
    }
-      sensor->readSensor(10); //read sensor with period of 10ms
+      // sensor->readSensor(10); //read sensor with period of 10ms
       
-      input = sensor->getOutput();
+      // input = sensor->getOutput();
       
+      input = sensor->poll_return();
       prevOutput = output;
       output = pidController->Run(input);   
       
@@ -433,10 +434,10 @@ STATE wallFollowRev(float wallDist, float dist, IRSensorInterface* sensor, IRSen
      lastTime = millis();
      
      if(back->poll_return()<8) { 
-      BluetoothSerial.print("Sensor reading <8");
+      // BluetoothSerial.print("Sensor reading <8");
       counter++;
-      BluetoothSerial.println(counter);
-      if(counter > 10){
+      // BluetoothSerial.println(counter);
+      if(counter > 4){
         init = 1;
         counter = 0;
         return STOPPED;
@@ -621,7 +622,7 @@ initStates strafe_left_wall(IRSensorInterface* sensor)
      
      if(sensor->poll_return()<8) { 
       counter++;
-      BluetoothSerial.println(counter);
+      // BluetoothSerial.println(counter);
       if(counter > 5){
         // init = 1;
         counter = 0;
@@ -647,7 +648,7 @@ STATE strafe_right_wall(IRSensorInterface* sensor)
   volatile static bool init = 1;
   if(init){
     // BluetoothSerial.print("init Count");
-    BluetoothSerial.println(counter);
+    // BluetoothSerial.println(counter);
     init=0;
   }
 
